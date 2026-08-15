@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學測複習戰情室 & 智能錯題本</title>
+    <title>複習紀錄簿</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Supabase JS SDK -->
@@ -12,7 +12,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
         
-        /* 精緻卡片風格 */
         .exam-note {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -20,93 +19,82 @@
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .exam-note:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07);
             border-color: #cbd5e1;
         }
 
-        /* 拖曳時的視覺特效 */
-        .draggable-item {
-            cursor: grab;
-        }
-        .draggable-item:active {
-            cursor: grabbing;
-        }
+        .draggable-item { cursor: grab; }
+        .draggable-item:active { cursor: grabbing; }
         .drag-over {
             background-color: #e0e7ff !important;
             border: 2px dashed #6366f1 !important;
         }
 
-        /* 按鈕及互動微動效 */
-        button, .interactive-btn {
-            transition: all 0.2s ease;
-        }
-        button:active {
-            transform: scale(0.97);
-        }
+        button, .interactive-btn { transition: all 0.2s ease; }
+        button:active { transform: scale(0.96); }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
-    <!-- 頂部導覽列 -->
+    <!-- 頂部導覽列 (手機版精簡適配) -->
     <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-sm">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-slate-800 tracking-wider flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 text-sm">🎯</span> 
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center">
+            <h1 class="text-base sm:text-xl font-bold text-slate-800 tracking-wider flex items-center gap-2">
+                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 text-xs sm:text-sm">🎯</span> 
                 學測複習戰情室
             </h1>
             <div class="flex items-center space-x-2">
-                <span id="db-status" class="bg-amber-500 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-sm tracking-wide">資料庫連線中...</span>
+                <span id="db-status" class="bg-amber-500 text-white px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold shadow-sm tracking-wide">連線中...</span>
             </div>
         </div>
     </header>
 
     <!-- 主要內容區 -->
-    <main class="flex-grow max-w-6xl mx-auto px-4 py-8 w-full space-y-8">
+    <main class="flex-grow max-w-6xl mx-auto px-3 sm:px-4 py-5 sm:py-8 w-full space-y-6 sm:space-y-8">
         
-        <!-- 第一部分：知識管理庫與隨機抽考工具列 -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- 第一部分：知識管理庫與隨機抽考 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             
-            <!-- 左側：各科複習資料夾與文字檔知識庫 (支援拖曳與滑動式檢視) -->
+            <!-- 左側：各科複習資料夾與文字檔知識庫 -->
             <section class="lg:col-span-2 space-y-6">
-                <div class="bg-white p-7 rounded-3xl shadow-sm border border-slate-100/80">
-                    <div class="flex justify-between items-center mb-4">
+                <div class="bg-white p-5 sm:p-7 rounded-3xl shadow-sm border border-slate-100/80">
+                    <div class="flex justify-between items-center mb-3 sm:mb-4">
                         <div class="flex items-center space-x-3">
-                            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
                                 <span class="text-indigo-600">📚</span> 核心科目複習知識庫
                             </h2>
-                            <button onclick="addRootFolder()" class="text-xs bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl transition shadow-sm hover:shadow flex items-center gap-1">
+                            <button onclick="addRootFolder()" class="text-xs bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1">
                                 <span>+</span> 新增科目
                             </button>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-400 mb-5 flex items-center gap-1.5">
-                        <span>💡</span> 提示：按住項目或資料夾可調整順序；拖入資料夾中可收納，拖曳至下方空白處可移回第一層根目錄！
+                    <p class="text-[11px] sm:text-xs text-slate-400 mb-4 flex items-center gap-1.5 leading-relaxed">
+                        <span>💡</span> 提示：支援拖曳排序與收納，變更會秒速自動同步至雲端！
                     </p>
                     
                     <!-- 階層式資料夾清單容器 -->
-                    <div id="tree-container" class="space-y-2 max-h-[420px] overflow-y-auto pr-2 min-h-[140px] p-3 rounded-2xl border-2 border-dashed border-slate-200/60 bg-slate-50/40 transition">
+                    <div id="tree-container" class="space-y-2 max-h-[380px] sm:max-h-[420px] overflow-y-auto pr-1 min-h-[140px] p-2.5 sm:p-3 rounded-2xl border-2 border-dashed border-slate-200/60 bg-slate-50/40 transition">
                     </div>
                 </div>
             </section>
 
             <!-- 右側：每日隨機抽考 -->
             <section class="space-y-6">
-                <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-7 rounded-3xl text-white shadow-xl shadow-indigo-600/10 relative overflow-hidden">
-                    <!-- 背景裝飾圓圈 -->
+                <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-5 sm:p-7 rounded-3xl text-white shadow-xl shadow-indigo-600/10 relative overflow-hidden">
                     <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
 
-                    <div class="flex justify-between items-center mb-4 relative z-10">
-                        <h2 class="text-base font-bold flex items-center gap-2 tracking-wide">
+                    <div class="flex justify-between items-center mb-3 sm:mb-4 relative z-10">
+                        <h2 class="text-sm sm:text-base font-bold flex items-center gap-2 tracking-wide">
                             <span>💡</span> 每日隨機抽考
                         </h2>
-                        <span id="quiz-type-badge" class="text-[11px] font-bold px-3 py-1 rounded-xl bg-white/20 backdrop-blur-md text-white shadow-inner">單選題</span>
+                        <span id="quiz-type-badge" class="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-white/20 backdrop-blur-md text-white">單選題</span>
                     </div>
-                    <div id="quiz-container" class="space-y-4 relative z-10">
-                        <p id="quiz-question" class="text-sm font-medium text-indigo-50 leading-relaxed min-h-[48px]">載入題目中...</p>
-                        <div id="quiz-options" class="space-y-2.5"></div>
-                        <div id="quiz-feedback" class="text-xs font-bold hidden p-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 shadow-lg"></div>
-                        <button onclick="loadUserQuiz()" class="w-full mt-3 bg-white/15 hover:bg-white/25 text-white text-xs font-bold py-3 rounded-2xl transition border border-white/20 shadow-sm hover:shadow flex items-center justify-center gap-1.5">
+                    <div id="quiz-container" class="space-y-3.5 relative z-10">
+                        <p id="quiz-question" class="text-xs sm:text-sm font-medium text-indigo-50 leading-relaxed min-h-[44px]">載入題目中...</p>
+                        <div id="quiz-options" class="space-y-2"></div>
+                        <div id="quiz-feedback" class="text-xs font-bold hidden p-3 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 shadow-lg"></div>
+                        <button onclick="loadUserQuiz()" class="w-full mt-2 bg-white/15 hover:bg-white/25 text-white text-xs font-bold py-3 rounded-2xl transition border border-white/20 shadow-sm flex items-center justify-center gap-1.5">
                             <span>🔄</span> 換一題挑戰
                         </button>
                     </div>
@@ -116,135 +104,133 @@
         </div>
 
         <!-- 第二部分：各科小檔案與便條紙題庫系統 -->
-        <section class="bg-white p-7 rounded-3xl shadow-sm border border-slate-100/80 space-y-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <section class="bg-white p-5 sm:p-7 rounded-3xl shadow-sm border border-slate-100/80 space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
                     <span class="text-indigo-600">📖</span> 各科錯題與精選試題小檔案
                 </h2>
-                <!-- 科目篩選按鈕列 -->
-                <div id="subject-filters" class="flex flex-wrap gap-2">
-                    <button onclick="filterSubject('全部')" class="px-4 py-2 text-xs font-bold rounded-xl bg-slate-900 text-white transition filter-btn shadow-sm" data-subject="全部">全部</button>
+                <!-- 科目篩選按鈕列 (手機可橫向捲動) -->
+                <div id="subject-filters" class="flex flex-nowrap overflow-x-auto w-full sm:w-auto gap-2 pb-1 sm:pb-0 max-w-full">
+                    <button onclick="filterSubject('全部')" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-900 text-white transition filter-btn shadow-sm shrink-0" data-subject="全部">全部</button>
                 </div>
             </div>
             
-            <!-- 新增 / 修改題目的表單 -->
-            <div class="bg-slate-50/80 p-6 md:p-8 rounded-2xl border border-slate-200/80 grid grid-cols-1 md:grid-cols-2 gap-5 shadow-inner">
+            <!-- 新增 / 修改題目的表單 (手機改為單欄緊湊排列) -->
+            <div class="bg-slate-50/80 p-4 sm:p-7 rounded-2xl border border-slate-200/80 grid grid-cols-1 md:grid-cols-2 gap-4 shadow-inner">
                 <input type="hidden" id="editing-id" value="">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2">科目</label>
-                    <input id="card-subject" type="text" placeholder="例如: 數學A、物理、化學" class="w-full p-3.5 text-sm border border-slate-200/80 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">科目</label>
+                    <input id="card-subject" type="text" placeholder="例如: 數學A、物理、化學" class="w-full p-3 text-xs sm:text-sm border border-slate-200/80 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2">章節 / 題目標籤</label>
-                    <input id="card-title" type="text" placeholder="例如: 向量與空間 / 113學測單選3" class="w-full p-3.5 text-sm border border-slate-200/80 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">章節 / 題目標籤</label>
+                    <input id="card-title" type="text" placeholder="例如: 向量與空間 / 113學測單選3" class="w-full p-3 text-xs sm:text-sm border border-slate-200/80 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
                 </div>
                 <div class="col-span-full">
-                    <label class="block text-xs font-bold text-slate-500 mb-2">題目內容</label>
-                    <textarea id="card-question" placeholder="在此輸入完整的題目敘述..." class="w-full p-4 text-sm border border-slate-200/80 rounded-2xl h-28 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"></textarea>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">題目內容</label>
+                    <textarea id="card-question" placeholder="在此輸入完整的題目敘述..." class="w-full p-3.5 text-xs sm:text-sm border border-slate-200/80 rounded-2xl h-24 sm:h-28 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"></textarea>
                 </div>
                 
                 <!-- ABCDE 選項獨立填空區 -->
-                <div class="col-span-full space-y-3 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="col-span-full space-y-2.5 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
                     <label class="block text-xs font-bold text-slate-600">選擇題選項 (選填)</label>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="flex items-center space-x-2.5 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg shadow-sm">A</span>
-                            <input id="opt-a" type="text" placeholder="選項 (A) 內容" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="flex items-center space-x-2 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
+                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded-lg">A</span>
+                            <input id="opt-a" type="text" placeholder="選項 (A)" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <div class="flex items-center space-x-2.5 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg shadow-sm">B</span>
-                            <input id="opt-b" type="text" placeholder="選項 (B) 內容" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div class="flex items-center space-x-2 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
+                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded-lg">B</span>
+                            <input id="opt-b" type="text" placeholder="選項 (B)" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <div class="flex items-center space-x-2.5 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg shadow-sm">C</span>
-                            <input id="opt-c" type="text" placeholder="選項 (C) 內容" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div class="flex items-center space-x-2 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
+                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded-lg">C</span>
+                            <input id="opt-c" type="text" placeholder="選項 (C)" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <div class="flex items-center space-x-2.5 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg shadow-sm">D</span>
-                            <input id="opt-d" type="text" placeholder="選項 (D) 內容" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div class="flex items-center space-x-2 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100">
+                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded-lg">D</span>
+                            <input id="opt-d" type="text" placeholder="選項 (D)" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <div class="flex items-center space-x-2.5 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100 sm:col-span-2">
-                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg shadow-sm">E</span>
-                            <input id="opt-e" type="text" placeholder="選項 (E) 內容 (選填)" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div class="flex items-center space-x-2 bg-slate-50/60 p-1.5 rounded-xl border border-slate-100 sm:col-span-2">
+                            <span class="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded-lg">E</span>
+                            <input id="opt-e" type="text" placeholder="選項 (E) (選填)" class="w-full p-2 text-xs border border-slate-200/60 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
                     </div>
                 </div>
 
                 <!-- 正確解答設定 -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2">正確答案 (支援單選 A 或多選 AB, A,C)</label>
-                    <input id="card-answer" type="text" placeholder="例如: A 或 AB 或 A,C" class="w-full p-3.5 text-sm border border-slate-200/80 rounded-2xl bg-white font-bold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">正確答案 (支援 A 或多選 AB, A,C)</label>
+                    <input id="card-answer" type="text" placeholder="例如: A 或 AB" class="w-full p-3 text-xs sm:text-sm border border-slate-200/80 rounded-2xl bg-white font-bold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
                 </div>
 
                 <div class="col-span-full">
-                    <label class="block text-xs font-bold text-slate-500 mb-2">解題思路與計算過程</label>
-                    <textarea id="card-solution" placeholder="記錄突破口、關鍵公式、計算步驟或容易踩雷的觀念..." class="w-full p-4 text-sm border border-slate-200/80 rounded-2xl h-32 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"></textarea>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">解題思路與計算過程</label>
+                    <textarea id="card-solution" placeholder="記錄突破口、關鍵公式、計算步驟..." class="w-full p-3.5 text-xs sm:text-sm border border-slate-200/80 rounded-2xl h-24 sm:h-32 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"></textarea>
                 </div>
                 
-                <div class="col-span-full flex gap-3 pt-2">
-                    <button onclick="saveCard()" id="submit-btn" class="flex-grow bg-slate-900 text-white py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition text-sm shadow-md hover:shadow-lg flex items-center justify-center gap-1.5">
+                <div class="col-span-full flex flex-col sm:flex-row gap-2.5 pt-1">
+                    <button onclick="saveCard()" id="submit-btn" class="w-full sm:flex-grow bg-slate-900 text-white py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition text-xs sm:text-sm shadow-md flex items-center justify-center gap-1.5">
                         <span>✨</span> 將題目加入便條紙題庫
                     </button>
-                    <button onclick="cancelEdit()" id="cancel-btn" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 px-7 py-3.5 rounded-2xl font-bold transition text-sm">取消修改</button>
+                    <button onclick="cancelEdit()" id="cancel-btn" class="hidden w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3.5 rounded-2xl font-bold transition text-xs sm:text-sm">取消修改</button>
                 </div>
             </div>
 
             <!-- 便條紙題庫牆 -->
-            <div id="card-wall" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-3">
-                <!-- 卡片會自動在此生成 -->
+            <div id="card-wall" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-2">
             </div>
         </section>
 
     </main>
 
-    <!-- 專屬文字檔編輯 Modal 視窗 -->
-    <div id="textfile-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-4 transition-all">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100">
-            <div class="bg-slate-900 text-white px-7 py-5 flex justify-between items-center">
-                <h3 id="modal-title" class="font-bold text-base flex items-center gap-2">📄 編輯文字筆記</h3>
-                <button onclick="closeTextModal()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center transition text-sm">✕</button>
+    <!-- 文字檔編輯 Modal 視窗 (手機全螢幕優化) -->
+    <div id="textfile-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col h-[90vh] sm:h-auto sm:max-h-[90vh] border border-slate-100">
+            <div class="bg-slate-900 text-white px-5 sm:px-7 py-4 flex justify-between items-center">
+                <h3 id="modal-title" class="font-bold text-sm sm:text-base flex items-center gap-2">📄 編輯文字筆記</h3>
+                <button onclick="closeTextModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center transition text-xs">✕</button>
             </div>
-            <div class="p-7 flex-grow flex flex-col space-y-5 overflow-y-auto">
+            <div class="p-4 sm:p-7 flex-grow flex flex-col space-y-4 overflow-y-auto">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2">文字檔標題名稱</label>
-                    <input id="modal-file-name" type="text" class="w-full p-3.5 text-sm border border-slate-200 rounded-2xl bg-slate-50/60 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 transition shadow-sm">
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">文字檔標題名稱</label>
+                    <input id="modal-file-name" type="text" class="w-full p-3 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-slate-50 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900">
                 </div>
                 <div class="flex-grow flex flex-col">
-                    <label class="block text-xs font-bold text-slate-500 mb-2">文字檔詳細內容 (支援長篇筆記、公式、大綱)</label>
-                    <textarea id="modal-file-content" placeholder="在此輸入或貼上詳細的筆記內容..." class="w-full h-80 p-4 text-sm border border-slate-200 rounded-2xl bg-slate-50/60 font-mono resize-none focus:outline-none focus:ring-2 focus:ring-slate-900 transition shadow-sm"></textarea>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">詳細內容 (支援長篇筆記、公式、大綱)</label>
+                    <textarea id="modal-file-content" placeholder="在此輸入或貼上詳細的筆記內容..." class="w-full h-64 sm:h-80 p-3.5 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-slate-50 font-mono resize-none focus:outline-none focus:ring-2 focus:ring-slate-900"></textarea>
                 </div>
             </div>
-            <div class="bg-slate-50 px-7 py-4 border-t border-slate-100 flex justify-end space-x-3">
-                <button onclick="closeTextModal()" class="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
-                <button onclick="saveTextModal()" class="px-7 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-md hover:shadow">儲存文字檔</button>
+            <div class="bg-slate-50 px-5 sm:px-7 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
+                <button onclick="closeTextModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
+                <button onclick="saveTextModal()" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-md">儲存文字檔</button>
             </div>
         </div>
     </div>
 
-    <!-- 美化版自定義 Prompt Modal 結構 -->
+    <!-- 自定義 Prompt Modal -->
     <div id="custom-prompt-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-slate-100 transform transition-all animate-in fade-in zoom-in-95 duration-200">
-            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-slate-100">
+            <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
                 <h3 id="custom-prompt-title" class="font-bold text-sm flex items-center gap-2">✨ 請輸入名稱</h3>
-                <button onclick="closeCustomPrompt(false)" class="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition text-xs">✕</button>
+                <button onclick="closeCustomPrompt(false)" class="w-7 h-7 rounded-xl bg-white/10 text-slate-300 hover:text-white flex items-center justify-center text-xs">✕</button>
             </div>
-            <div class="p-6 space-y-4">
+            <div class="p-5 space-y-3">
                 <p id="custom-prompt-desc" class="text-xs text-slate-500">請在下方輸入您需要的內容：</p>
-                <input id="custom-prompt-input" type="text" placeholder="請在此輸入..." class="w-full p-3.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition shadow-sm">
+                <input id="custom-prompt-input" type="text" placeholder="請在此輸入..." class="w-full p-3 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
-            <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end space-x-2">
-                <button onclick="closeCustomPrompt(false)" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
-                <button onclick="closeCustomPrompt(true)" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition">確定</button>
+            <div class="bg-slate-50 px-5 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
+                <button onclick="closeCustomPrompt(false)" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl">取消</button>
+                <button onclick="closeCustomPrompt(true)" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl">確定</button>
             </div>
         </div>
     </div>
 
-    <!-- 頁尾 -->
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400">
+    <footer class="bg-white border-t border-slate-200 py-5 text-center text-xs text-slate-400">
         堅持下去，倒數的每一天都在累積實力！加油！
     </footer>
 
-    <!-- JavaScript 邏輯與 Supabase 整合 -->
+    <!-- JavaScript 邏輯與即時同步 -->
     <script>
         const SUPABASE_URL = 'https://wtubnxzecdtssrjulevk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_NHSv-j6dLVR3CbAR1rjHyQ_5Cig1fAO';
@@ -253,8 +239,6 @@
         let cards = [];
         let currentFilter = '全部';
         let currentEditingFileId = null;
-
-        // --- 自定義 Prompt 相關變數與非同步包裝 ---
         let promptResolve = null;
 
         function showCustomPrompt(title = "請輸入名稱", placeholder = "請在此輸入...") {
@@ -280,7 +264,6 @@
             const modal = document.getElementById('custom-prompt-modal');
             const input = document.getElementById('custom-prompt-input');
             const value = input.value.trim();
-            
             modal.classList.add('hidden');
             if (promptResolve) {
                 promptResolve(isConfirm ? value : null);
@@ -290,16 +273,15 @@
 
         try {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            document.getElementById('db-status').innerText = '雲端資料庫已連線';
-            document.getElementById('db-status').className = 'bg-emerald-600 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-sm tracking-wide';
+            document.getElementById('db-status').innerText = '雲端同步就緒';
+            document.getElementById('db-status').className = 'bg-emerald-600 text-white px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold shadow-sm tracking-wide';
         } catch (e) {
-            document.getElementById('db-status').innerText = '資料庫未設定 (使用本機模式)';
-            document.getElementById('db-status').className = 'bg-rose-500 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide';
+            document.getElementById('db-status').innerText = '本機模式';
+            document.getElementById('db-status').className = 'bg-rose-500 text-white px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold';
         }
 
         let treeData = [];
 
-        // --- Supabase 知識庫同步載入與巢狀轉換函式 ---
         async function fetchTreeData() {
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
                 treeData = JSON.parse(localStorage.getItem('study_tree')) || getDefaultTree();
@@ -312,17 +294,11 @@
                 .select('*')
                 .order('sort_order', { ascending: true });
 
-            if (error) {
-                console.error('載入知識庫失敗:', error);
-                treeData = getDefaultTree();
-                renderTree(treeData, document.getElementById('tree-container'));
-                return;
-            }
-
-            treeData = buildNestedTree(data || []);
-            if (treeData.length === 0) {
+            if (error || !data || data.length === 0) {
                 treeData = getDefaultTree();
                 await saveEntireTreeToSupabase();
+            } else {
+                treeData = buildNestedTree(data);
             }
             renderTree(treeData, document.getElementById('tree-container'));
         }
@@ -330,11 +306,11 @@
         function getDefaultTree() {
             return [
                 { id: Date.now() + 1, name: "國文", type: "folder", isOpen: true, children: [
-                    { id: Date.now() + 2, name: "核心古文三十篇精讀與字音字形", type: "item", done: false },
-                    { id: Date.now() + 3, name: "古文三十篇核心重點筆記", type: "textfile", content: "【第1冊】勸學：君子曰：學不可以已...\n【第2冊】師說：古之學者必有師..." }
+                    { id: Date.now() + 2, name: "核心古文三十篇精讀", type: "item", done: false },
+                    { id: Date.now() + 3, name: "古文重點筆記", type: "textfile", content: "【第1冊】勸學..." }
                 ]},
                 { id: Date.now() + 4, name: "英文", type: "folder", isOpen: false, children: [
-                    { id: Date.now() + 5, name: "7000單字進度複習 (Level 5-6)", type: "item", done: false }
+                    { id: Date.now() + 5, name: "7000單字複習", type: "item", done: false }
                 ]}
             ];
         }
@@ -343,21 +319,11 @@
             const map = {};
             const roots = [];
             flatList.forEach(item => {
-                map[item.id] = { 
-                    id: item.id, 
-                    name: item.name, 
-                    type: item.type, 
-                    isOpen: item.is_open, 
-                    done: item.done, 
-                    content: item.content, 
-                    children: [] 
-                };
+                map[item.id] = { id: item.id, name: item.name, type: item.type, isOpen: item.is_open, done: item.done, content: item.content, children: [] };
             });
             flatList.forEach(item => {
-                if (item.parent_id) {
-                    if (map[item.parent_id]) {
-                        map[item.parent_id].children.push(map[item.id]);
-                    }
+                if (item.parent_id && map[item.parent_id]) {
+                    map[item.parent_id].children.push(map[item.id]);
                 } else {
                     roots.push(map[item.id]);
                 }
@@ -366,24 +332,19 @@
         }
 
         async function saveAndRenderTree() {
-            localStorage.setItem('study_tree', JSON.stringify(treeData));
             renderTree(treeData, document.getElementById('tree-container'));
-
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
             await saveEntireTreeToSupabase();
         }
 
         async function saveEntireTreeToSupabase() {
-            // 先抓出雲端現有的所有 id 進行刪除（避免孤兒資料）
             const { data: existing } = await supabaseClient.from('study_trees').select('id');
             if (existing && existing.length > 0) {
-                const ids = existing.map(x => x.id);
-                await supabaseClient.from('study_trees').delete().in('id', ids);
+                await supabaseClient.from('study_trees').delete().in('id', existing.map(x => x.id));
             }
 
             const flatList = [];
             let orderCounter = 0;
-
             const flatten = (nodes, parentId = null) => {
                 nodes.forEach(node => {
                     flatList.push({
@@ -401,89 +362,31 @@
                     }
                 });
             };
-
             flatten(treeData);
             if (flatList.length > 0) {
-                const { error } = await supabaseClient.from('study_trees').insert(flatList);
-                if (error) console.error('同步雲端知識庫失敗:', error);
+                await supabaseClient.from('study_trees').insert(flatList);
             }
         }
 
-        // --- 拖曳功能相關變數與處理函式 ---
+        // 拖曳功能
         let draggedNodeId = null;
-
-        function handleDragStart(e, id) {
-            e.stopPropagation();
-            draggedNodeId = id;
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            if (e.currentTarget.id === 'tree-container') {
-                e.currentTarget.classList.add('drag-over');
-            }
-        }
-
-        function handleDragEnter(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
-        }
-
+        function handleDragStart(e, id) { e.stopPropagation(); draggedNodeId = id; }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnter(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
         function handleDropToRoot(e) {
             e.preventDefault();
             e.currentTarget.classList.remove('drag-over');
             if (draggedNodeId === null) return;
-
-            let draggedNode = null;
-            const removeNode = (nodes) => {
-                for (let i = 0; i < nodes.length; i++) {
-                    if (nodes[i].id === draggedNodeId) {
-                        return nodes.splice(i, 1)[0];
-                    }
-                    if (nodes[i].children) {
-                        const found = removeNode(nodes[i].children);
-                        if (found) return found;
-                    }
-                }
-                return null;
-            };
-
-            draggedNode = removeNode(treeData);
-            if (draggedNode) {
-                treeData.push(draggedNode);
-                draggedNodeId = null;
-                saveAndRenderTree();
-            }
+            let draggedNode = removeNodeFromTree(treeData, draggedNodeId);
+            if (draggedNode) { treeData.push(draggedNode); draggedNodeId = null; saveAndRenderTree(); }
         }
 
         function handleDrop(e, targetId) {
-            e.stopPropagation();
-            e.preventDefault();
+            e.stopPropagation(); e.preventDefault();
             e.currentTarget.classList.remove('drag-over');
-
             if (draggedNodeId === null || draggedNodeId === targetId) return;
-
-            let draggedNode = null;
-            const removeNode = (nodes) => {
-                for (let i = 0; i < nodes.length; i++) {
-                    if (nodes[i].id === draggedNodeId) {
-                        return nodes.splice(i, 1)[0];
-                    }
-                    if (nodes[i].children) {
-                        const found = removeNode(nodes[i].children);
-                        if (found) return found;
-                    }
-                }
-                return null;
-            };
-
-            draggedNode = removeNode(treeData);
+            let draggedNode = removeNodeFromTree(treeData, draggedNodeId);
             if (!draggedNode) return;
 
             const insertIntoTarget = (nodes) => {
@@ -498,42 +401,40 @@
                         }
                         return true;
                     }
-                    if (nodes[i].children) {
-                        if (insertIntoTarget(nodes[i].children)) return true;
-                    }
+                    if (nodes[i].children && insertIntoTarget(nodes[i].children)) return true;
                 }
                 return false;
             };
 
-            if (!insertIntoTarget(treeData)) {
-                treeData.push(draggedNode);
-            }
-
+            if (!insertIntoTarget(treeData)) treeData.push(draggedNode);
             draggedNodeId = null;
             saveAndRenderTree();
         }
 
+        function removeNodeFromTree(nodes, id) {
+            for (let i = 0; i < nodes.length; i++) {
+                if (nodes[i].id === id) return nodes.splice(i, 1)[0];
+                if (nodes[i].children) {
+                    let found = removeNodeFromTree(nodes[i].children, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
         async function addRootFolder() {
-            const name = await showCustomPrompt("新增科目名稱", "例如: 數學A、物理、化學...");
+            const name = await showCustomPrompt("新增科目名稱", "例如: 數學A、物理...");
             if (!name) return;
-            treeData.push({
-                id: Date.now(),
-                name: name,
-                type: "folder",
-                isOpen: true,
-                children: []
-            });
+            treeData.push({ id: Date.now(), name, type: "folder", isOpen: true, children: [] });
             saveAndRenderTree();
         }
 
         function renderTree(data, container, depth = 0) {
             container.innerHTML = '';
-
             data.forEach((node) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "my-1.5 draggable-item";
                 wrapper.draggable = true;
-
                 wrapper.addEventListener('dragstart', (e) => handleDragStart(e, node.id));
                 wrapper.addEventListener('dragover', handleDragOver);
                 wrapper.addEventListener('dragenter', handleDragEnter);
@@ -543,47 +444,46 @@
                 if (node.type === "folder") {
                     const isRoot = depth === 0;
                     wrapper.innerHTML = `
-                        <div class="flex items-center justify-between p-3 ${isRoot ? 'bg-white border border-slate-200/80 rounded-2xl shadow-sm' : 'hover:bg-slate-100/70 rounded-xl'} transition-all">
-                            <div class="flex items-center space-x-2.5 cursor-pointer select-none flex-grow" onclick="toggleNode(${node.id})">
+                        <div class="flex items-center justify-between p-2.5 sm:p-3 ${isRoot ? 'bg-white border border-slate-200/80 rounded-2xl shadow-sm' : 'hover:bg-slate-100/70 rounded-xl'} transition-all">
+                            <div class="flex items-center space-x-2 cursor-pointer select-none flex-grow" onclick="toggleNode(${node.id})">
                                 <span class="text-slate-400 font-bold text-xs w-4 h-4 flex items-center justify-center bg-slate-100 rounded-md">${node.isOpen ? '▼' : '▶'}</span>
-                                <span class="font-bold text-slate-800 text-sm flex items-center gap-1.5">📂 ${node.name}</span>
+                                <span class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">📂 ${node.name}</span>
                             </div>
-                            <div class="flex items-center space-x-1.5" onclick="event.stopPropagation()">
-                                <button onclick="addChild(${node.id}, 'item')" title="新增勾選項目" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl font-semibold transition shadow-sm">+ 項目</button>
-                                <button onclick="addChild(${node.id}, 'textfile')" title="新增文字檔筆記" class="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl font-semibold transition shadow-sm">📄+ 文字檔</button>
-                                <button onclick="addChild(${node.id}, 'folder')" title="新增子資料夾" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl font-semibold transition shadow-sm">📂+ 資料夾</button>
-                                <button onclick="deleteNode(${node.id})" title="刪除" class="text-xs text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-xl transition">🗑️</button>
+                            <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                                <button onclick="addChild(${node.id}, 'item')" class="text-[10px] sm:text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 sm:px-2.5 py-1.5 rounded-xl font-semibold">+項目</button>
+                                <button onclick="addChild(${node.id}, 'textfile')" class="text-[10px] sm:text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 sm:px-2.5 py-1.5 rounded-xl font-semibold">📄筆記</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">🗑️</button>
                             </div>
                         </div>
                     `;
                     if (node.isOpen && node.children && node.children.length > 0) {
                         const childContainer = document.createElement('div');
-                        childContainer.style.marginLeft = `${Math.min(depth + 1, 4) * 16}px`;
-                        childContainer.className = "space-y-1.5 mt-1.5 border-l-2 border-indigo-100/80 pl-3";
+                        childContainer.style.marginLeft = `${Math.min(depth + 1, 3) * 12}px`;
+                        childContainer.className = "space-y-1 mt-1 border-l-2 border-indigo-100 pl-2.5";
                         renderTree(node.children, childContainer, depth + 1);
                         wrapper.appendChild(childContainer);
                     }
                 } else if (node.type === "textfile") {
                     wrapper.innerHTML = `
-                        <div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-amber-50/60 border border-transparent hover:border-amber-200/80 transition-all">
-                            <div onclick="openTextModal(${node.id})" class="flex items-center space-x-2.5 cursor-pointer flex-grow select-none">
-                                <span class="text-xs font-semibold text-amber-700 hover:underline flex items-center gap-1.5">📄 ${node.name}</span>
+                        <div class="flex items-center justify-between p-2 rounded-xl hover:bg-amber-50/60 border border-transparent hover:border-amber-200/80 transition-all">
+                            <div onclick="openTextModal(${node.id})" class="flex items-center space-x-2 cursor-pointer flex-grow select-none">
+                                <span class="text-xs font-semibold text-amber-700 hover:underline">📄 ${node.name}</span>
                             </div>
                             <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
-                                <button onclick="openTextModal(${node.id})" class="text-[11px] bg-amber-100/80 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition font-medium shadow-sm">編輯內容</button>
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-xl transition">🗑️</button>
+                                <button onclick="openTextModal(${node.id})" class="text-[10px] sm:text-[11px] bg-amber-100/80 text-amber-800 px-2.5 py-1.5 rounded-xl font-medium">編輯</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">🗑️</button>
                             </div>
                         </div>
                     `;
                 } else {
                     wrapper.innerHTML = `
-                        <div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100/60 border border-transparent hover:border-slate-200/80 transition-all">
-                            <label class="flex items-center space-x-3 cursor-pointer flex-grow select-none" onclick="event.stopPropagation()">
-                                <input type="checkbox" ${node.done ? 'checked' : ''} onchange="toggleItem(${node.id})" class="w-4 h-4 text-indigo-600 rounded-md border-slate-300 focus:ring-indigo-500 cursor-pointer">
+                        <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-100/60 border border-transparent hover:border-slate-200/80 transition-all">
+                            <label class="flex items-center space-x-2.5 cursor-pointer flex-grow select-none" onclick="event.stopPropagation()">
+                                <input type="checkbox" ${node.done ? 'checked' : ''} onchange="toggleItem(${node.id})" class="w-4 h-4 text-indigo-600 rounded border-slate-300">
                                 <span class="text-xs font-medium ${node.done ? 'line-through text-slate-400' : 'text-slate-700'}">${node.name}</span>
                             </label>
                             <div onclick="event.stopPropagation()">
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-xl transition">🗑️</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">🗑️</button>
                             </div>
                         </div>
                     `;
@@ -604,37 +504,17 @@
         }
 
         async function addChild(parentId, type) {
-            let promptTitle = "請輸入複習項目名稱";
-            let placeholder = "例如: 歷屆試題第一輪...";
-            if (type === 'folder') {
-                promptTitle = "請輸入子資料夾名稱";
-                placeholder = "例如: 第一冊、克漏字特訓...";
-            }
-            if (type === 'textfile') {
-                promptTitle = "請輸入文字檔標題名稱";
-                placeholder = "例如: 核心公式總整理...";
-            }
-
-            const name = await showCustomPrompt(promptTitle, placeholder);
+            let title = type === 'folder' ? "新增子資料夾名稱" : type === 'textfile' ? "新增文字筆記名稱" : "新增複習項目名稱";
+            let name = await showCustomPrompt(title, "請輸入...");
             if (!name) return;
             
             const findAndAdd = (nodes) => {
                 nodes.forEach(n => {
                     if (n.id === parentId) {
                         if (!n.children) n.children = [];
-                        n.children.push({ 
-                            id: Date.now(), 
-                            name, 
-                            type, 
-                            isOpen: false, 
-                            children: [], 
-                            done: false,
-                            content: type === 'textfile' ? '# 新增的筆記內容\n在此輸入...' : undefined
-                        });
+                        n.children.push({ id: Date.now(), name, type, isOpen: false, children: [], done: false, content: type === 'textfile' ? '# 筆記內容\n' : undefined });
                         n.isOpen = true;
-                    } else if (n.children) {
-                        findAndAdd(n.children);
-                    }
+                    } else if (n.children) findAndAdd(n.children);
                 });
             };
             findAndAdd(treeData);
@@ -642,13 +522,10 @@
         }
 
         function deleteNode(id) {
-            if (!confirm("確定要刪除此項目或文字檔嗎？")) return;
+            if (!confirm("確定要刪除此項目嗎？")) return;
             const findAndDelete = (nodes) => {
-                const index = nodes.findIndex(n => n.id === id);
-                if (index > -1) {
-                    nodes.splice(index, 1);
-                    return true;
-                }
+                let index = nodes.findIndex(n => n.id === id);
+                if (index > -1) { nodes.splice(index, 1); return true; }
                 for (let n of nodes) {
                     if (n.children && findAndDelete(n.children)) return true;
                 }
@@ -672,7 +549,6 @@
         function openTextModal(id) {
             currentEditingFileId = id;
             let targetFile = null;
-
             const findNode = (nodes) => {
                 for (let n of nodes) {
                     if (n.id === id) { targetFile = n; return; }
@@ -680,9 +556,8 @@
                 }
             };
             findNode(treeData);
-
             if (targetFile) {
-                document.getElementById('modal-title').innerText = `📄 編輯文字檔：${targetFile.name}`;
+                document.getElementById('modal-title').innerText = `📄 編輯：${targetFile.name}`;
                 document.getElementById('modal-file-name').value = targetFile.name;
                 document.getElementById('modal-file-content').value = targetFile.content || '';
                 document.getElementById('textfile-modal').classList.remove('hidden');
@@ -698,15 +573,10 @@
             if (!currentEditingFileId) return;
             const newName = document.getElementById('modal-file-name').value.trim();
             const newContent = document.getElementById('modal-file-content').value;
-
             const findAndUpdate = (nodes) => {
                 nodes.forEach(n => {
-                    if (n.id === currentEditingFileId) {
-                        n.name = newName || '未命名文字檔';
-                        n.content = newContent;
-                    } else if (n.children) {
-                        findAndUpdate(n.children);
-                    }
+                    if (n.id === currentEditingFileId) { n.name = newName || '未命名'; n.content = newContent; }
+                    else if (n.children) findAndUpdate(n.children);
                 });
             };
             findAndUpdate(treeData);
@@ -714,7 +584,7 @@
             closeTextModal();
         }
 
-        // --- 智能自動判定單/多選測驗系統 ---
+        // --- 抽考系統 ---
         function loadUserQuiz() {
             const qContainer = document.getElementById('quiz-question');
             const optContainer = document.getElementById('quiz-options');
@@ -723,7 +593,7 @@
             feedback.classList.add('hidden');
 
             if (cards.length === 0) {
-                qContainer.innerText = "目前題庫還沒有題目！請先在下方新增你的錯題或試題。";
+                qContainer.innerText = "目前題庫尚無題目，請在下方新增錯題！";
                 optContainer.innerHTML = '';
                 badge.innerText = "等待題庫";
                 return;
@@ -735,14 +605,7 @@
 
             const cleanAns = (randomCard.answer || '').replace(/[^A-Ea-e]/g, '').toUpperCase();
             const isMultipleChoice = cleanAns.length > 1;
-
-            if (isMultipleChoice) {
-                badge.innerText = "多選題 (可複選)";
-                badge.className = "text-[11px] font-bold px-3 py-1 rounded-xl bg-amber-400 text-slate-900 shadow-md";
-            } else {
-                badge.innerText = "單選題";
-                badge.className = "text-[11px] font-bold px-3 py-1 rounded-xl bg-white/20 backdrop-blur-md text-white shadow-inner";
-            }
+            badge.innerText = isMultipleChoice ? "多選題" : "單選題";
 
             let hasOptions = false;
             if (randomCard.options && typeof randomCard.options === 'object') {
@@ -750,25 +613,22 @@
                     if (randomCard.options[key]) {
                         hasOptions = true;
                         const btn = document.createElement('button');
-                        
                         if (isMultipleChoice) {
-                            btn.className = 'quiz-opt-btn w-full text-left text-xs bg-white/10 hover:bg-white/25 text-indigo-50 p-3 rounded-2xl transition-all font-medium border border-white/15 flex items-center justify-between shadow-sm';
+                            btn.className = 'quiz-opt-btn w-full text-left text-xs bg-white/10 hover:bg-white/25 text-indigo-50 p-2.5 rounded-xl transition-all font-medium border border-white/15 flex items-center justify-between';
                             btn.dataset.key = key;
-                            btn.innerHTML = `<span>(${key}) ${randomCard.options[key]}</span><span class="opt-check text-indigo-200 font-bold bg-white/10 w-6 h-6 rounded-lg flex items-center justify-center">○</span>`;
+                            btn.innerHTML = `<span>(${key}) ${randomCard.options[key]}</span><span class="opt-check text-indigo-200 font-bold bg-white/10 w-5 h-5 rounded flex items-center justify-center">○</span>`;
                             btn.onclick = () => {
-                                btn.classList.toggle('bg-white/25');
-                                btn.classList.toggle('border-white/50');
                                 const checkSpan = btn.querySelector('.opt-check');
                                 if (checkSpan.innerText === '○') {
                                     checkSpan.innerText = '✓';
-                                    checkSpan.className = 'opt-check text-slate-900 font-bold bg-amber-300 w-6 h-6 rounded-lg flex items-center justify-center shadow-sm';
+                                    checkSpan.className = 'opt-check text-slate-900 font-bold bg-amber-300 w-5 h-5 rounded flex items-center justify-center';
                                 } else {
                                     checkSpan.innerText = '○';
-                                    checkSpan.className = 'opt-check text-indigo-200 font-bold bg-white/10 w-6 h-6 rounded-lg flex items-center justify-center';
+                                    checkSpan.className = 'opt-check text-indigo-200 font-bold bg-white/10 w-5 h-5 rounded flex items-center justify-center';
                                 }
                             };
                         } else {
-                            btn.className = 'w-full text-left text-xs bg-white/10 hover:bg-white/25 text-indigo-50 p-3 rounded-2xl transition-all font-medium border border-white/15 shadow-sm';
+                            btn.className = 'w-full text-left text-xs bg-white/10 hover:bg-white/25 text-indigo-50 p-2.5 rounded-xl transition-all font-medium border border-white/15';
                             btn.innerText = `(${key}) ${randomCard.options[key]}`;
                             btn.onclick = () => checkQuizAnswer(key, randomCard.answer, randomCard.solution, false, false);
                         }
@@ -778,14 +638,12 @@
 
                 if (isMultipleChoice && hasOptions) {
                     const submitBtn = document.createElement('button');
-                    submitBtn.className = 'w-full mt-3 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-bold py-3 rounded-2xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1.5';
-                    submitBtn.innerText = "🚀 送出多選答案與解析";
+                    submitBtn.className = 'w-full mt-2 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-bold py-2.5 rounded-xl transition shadow';
+                    submitBtn.innerText = "🚀 送出多選答案";
                     submitBtn.onclick = () => {
-                        const selectedKeys = [];
+                        let selectedKeys = [];
                         document.querySelectorAll('.quiz-opt-btn').forEach(b => {
-                            if (b.querySelector('.opt-check').innerText === '✓') {
-                                selectedKeys.push(b.dataset.key);
-                            }
+                            if (b.querySelector('.opt-check').innerText === '✓') selectedKeys.push(b.dataset.key);
                         });
                         checkQuizAnswer(selectedKeys.join(''), randomCard.answer, randomCard.solution, true, false);
                     };
@@ -794,12 +652,11 @@
             }
 
             if (!hasOptions) {
-                badge.innerText = "簡答 / 非選題";
-                badge.className = "text-[11px] font-bold px-3 py-1 rounded-xl bg-violet-400 text-slate-900 shadow-md";
-                optContainer.innerHTML = `<p class="text-xs text-indigo-200">此題為簡答/非選題，請點擊下方按鈕對答案與解析。</p>`;
+                badge.innerText = "簡答題";
+                optContainer.innerHTML = `<p class="text-xs text-indigo-200">此題為簡答題，請點擊下方查看解析。</p>`;
                 const btn = document.createElement('button');
-                btn.className = 'w-full text-left text-xs bg-white text-indigo-700 p-3.5 rounded-2xl font-bold mt-1 shadow-md hover:bg-indigo-50 transition';
-                btn.innerText = "💡 查看正確答案與解題思路";
+                btn.className = 'w-full text-xs bg-white text-indigo-700 p-2.5 rounded-xl font-bold mt-1 shadow';
+                btn.innerText = "💡 查看答案與解析";
                 btn.onclick = () => checkQuizAnswer('', randomCard.answer, randomCard.solution, false, true);
                 optContainer.appendChild(btn);
             }
@@ -808,38 +665,25 @@
         function checkQuizAnswer(selectedAnswer, correctAnswer, solution, isMultiple = false, isNonChoice = false) {
             const feedback = document.getElementById('quiz-feedback');
             feedback.classList.remove('hidden');
-
             const correct = (correctAnswer || '').replace(/[^A-Ea-e]/g, '').toUpperCase().split('').sort().join('');
             const selected = (selectedAnswer || '').replace(/[^A-Ea-e]/g, '').toUpperCase().split('').sort().join('');
 
             if (isNonChoice) {
-                feedback.className = "text-xs font-bold text-white mt-3 p-4 rounded-2xl bg-white/20 border border-white/30 backdrop-blur-md shadow-lg space-y-1.5";
-                feedback.innerHTML = `📌 <strong>正確答案：</strong> ${correctAnswer || '未填寫'}<br><br>💡 <strong>解題思路：</strong><br>${solution || '無解析'}`;
-                return;
-            }
-
-            if (!correct) {
-                feedback.className = "text-xs font-bold text-amber-200 mt-3 p-4 rounded-2xl bg-amber-500/35 border border-amber-400/40 backdrop-blur-md shadow-lg space-y-1.5";
-                feedback.innerHTML = `⚠️ 這張便條紙尚未設定「正確答案」。<br><br>💡 <strong>解題思路：</strong><br>${solution || '無解析'}`;
-                return;
-            }
-
-            if (isMultiple && !selected) {
-                alert('請至少勾選一個選項！');
-                feedback.classList.add('hidden');
+                feedback.className = "text-xs font-bold text-white mt-2.5 p-3 rounded-2xl bg-white/20 border border-white/30 backdrop-blur-md space-y-1";
+                feedback.innerHTML = `📌 <strong>答案：</strong> ${correctAnswer}<br>💡 <strong>解析：</strong> ${solution || '無'}`;
                 return;
             }
 
             if (selected === correct) {
-                feedback.className = "text-xs font-bold text-emerald-100 mt-3 p-4 rounded-2xl bg-emerald-600/40 border border-emerald-400/50 backdrop-blur-md shadow-lg space-y-1.5";
-                feedback.innerHTML = `🎉 <strong>答對了！</strong> 正確答案就是 (${correctAnswer})。<br><br>💡 <strong>解題思路：</strong><br>${solution || '無解析'}`;
+                feedback.className = "text-xs font-bold text-emerald-100 mt-2.5 p-3 rounded-2xl bg-emerald-600/50 border border-emerald-400 space-y-1";
+                feedback.innerHTML = `🎉 <strong>答對了！</strong> (${correctAnswer})<br>💡 <strong>解析：</strong> ${solution || '無'}`;
             } else {
-                feedback.className = "text-xs font-bold text-rose-100 mt-3 p-4 rounded-2xl bg-rose-600/40 border border-rose-400/50 backdrop-blur-md shadow-lg space-y-1.5";
-                feedback.innerHTML = `❌ <strong>答錯囉！</strong> 你選了 (${selectedAnswer})，但正確答案是 <strong>(${correctAnswer})</strong>。<br><br>💡 <strong>解題思路：</strong><br>${solution || '無解析'}`;
+                feedback.className = "text-xs font-bold text-rose-100 mt-2.5 p-3 rounded-2xl bg-rose-600/50 border border-rose-400 space-y-1";
+                feedback.innerHTML = `❌ <strong>答錯囉！</strong> 正確答案是 <strong>(${correctAnswer})</strong><br>💡 <strong>解析：</strong> ${solution || '無'}`;
             }
         }
 
-        // --- 雲端便條紙題庫與各科小檔案邏輯 ---
+        // --- 便條紙題庫 CRUD (即時同步) ---
         async function fetchCards() {
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
                 cards = JSON.parse(localStorage.getItem('study_notes_cards')) || [];
@@ -847,14 +691,8 @@
                 return;
             }
 
-            const { data, error } = await supabaseClient
-                .from('study_cards')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('載入失敗:', error);
-            } else {
+            const { data, error } = await supabaseClient.from('study_cards').select('*').order('created_at', { ascending: false });
+            if (!error) {
                 cards = data || [];
                 updateUI();
             }
@@ -869,11 +707,10 @@
         function renderSubjectFilters() {
             const filterContainer = document.getElementById('subject-filters');
             const subjects = ['全部', ...new Set(cards.map(c => c.subject).filter(Boolean))];
-            
             filterContainer.innerHTML = '';
             subjects.forEach(sub => {
                 const btn = document.createElement('button');
-                btn.className = `px-4 py-2 text-xs font-bold rounded-xl transition-all filter-btn shadow-sm ${currentFilter === sub ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+                btn.className = `px-3.5 py-2 text-xs font-bold rounded-xl transition filter-btn shadow-sm shrink-0 ${currentFilter === sub ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
                 btn.innerText = sub;
                 btn.onclick = () => filterSubject(sub);
                 filterContainer.appendChild(btn);
@@ -889,29 +726,25 @@
         async function saveCard() {
             const editingId = document.getElementById('editing-id').value;
             const subject = document.getElementById('card-subject').value.trim();
-            const title = document.getElementById('card-title').value.trim();
             const question = document.getElementById('card-question').value.trim();
-            const answer = document.getElementById('card-answer').value.trim();
             
             if (!subject || !question) {
-                alert('請至少填寫「科目」與「題目內容」！');
+                alert('請填寫「科目」與「題目內容」！');
                 return;
             }
 
-            const optionsObj = {
-                A: document.getElementById('opt-a').value.trim(),
-                B: document.getElementById('opt-b').value.trim(),
-                C: document.getElementById('opt-c').value.trim(),
-                D: document.getElementById('opt-d').value.trim(),
-                E: document.getElementById('opt-e').value.trim()
-            };
-
             const cardData = {
                 subject: subject,
-                title: title || '精選試題',
+                title: document.getElementById('card-title').value.trim() || '精選試題',
                 question: question,
-                options: optionsObj,
-                answer: answer,
+                options: {
+                    A: document.getElementById('opt-a').value.trim(),
+                    B: document.getElementById('opt-b').value.trim(),
+                    C: document.getElementById('opt-c').value.trim(),
+                    D: document.getElementById('opt-d').value.trim(),
+                    E: document.getElementById('opt-e').value.trim()
+                },
+                answer: document.getElementById('card-answer').value.trim(),
                 solution: document.getElementById('card-solution').value.trim()
             };
 
@@ -927,11 +760,10 @@
                 resetForm();
             } else {
                 if (editingId) {
-                    const { error } = await supabaseClient.from('study_cards').update(cardData).eq('id', editingId);
-                    if (error) { alert('修改失敗：' + error.message); return; }
+                    await supabaseClient.from('study_cards').update(cardData).eq('id', editingId);
                 } else {
-                    const { error } = await supabaseClient.from('study_cards').insert([cardData]);
-                    if (error) { alert('新增至雲端失敗：' + error.message); return; }
+                    cardData.id = Date.now();
+                    await supabaseClient.from('study_cards').insert([cardData]);
                 }
                 fetchCards();
                 resetForm();
@@ -957,16 +789,12 @@
                 document.getElementById('opt-e').value = card.options.E || '';
             }
 
-            document.getElementById('submit-btn').innerHTML = "<span>💾</span> 儲存修改內容";
-            document.getElementById('submit-btn').className = "flex-grow bg-amber-600 text-white py-3.5 rounded-2xl font-bold hover:bg-amber-700 transition text-sm shadow-md";
+            document.getElementById('submit-btn').innerHTML = "<span>💾</span> 儲存修改";
             document.getElementById('cancel-btn').classList.remove('hidden');
-            
             window.scrollTo({ top: 400, behavior: 'smooth' });
         }
 
-        function cancelEdit() {
-            resetForm();
-        }
+        function cancelEdit() { resetForm(); }
 
         function resetForm() {
             document.getElementById('editing-id').value = '';
@@ -981,23 +809,17 @@
             document.getElementById('card-answer').value = '';
             document.getElementById('card-solution').value = '';
             document.getElementById('submit-btn').innerHTML = "<span>✨</span> 將題目加入便條紙題庫";
-            document.getElementById('submit-btn').className = "flex-grow bg-slate-900 text-white py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition text-sm shadow-md";
             document.getElementById('cancel-btn').classList.add('hidden');
         }
 
         async function deleteCard(id) {
             if (!confirm("確定要刪除這張便條紙嗎？")) return;
-
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
                 cards = cards.filter(c => c.id != id);
                 localStorage.setItem('study_notes_cards', JSON.stringify(cards));
                 updateUI();
             } else {
-                const { error } = await supabaseClient.from('study_cards').delete().eq('id', id);
-                if (error) {
-                    alert('刪除失敗：' + error.message);
-                    return;
-                }
+                await supabaseClient.from('study_cards').delete().eq('id', id);
                 fetchCards();
             }
         }
@@ -1005,64 +827,50 @@
         function renderCards() {
             const wall = document.getElementById('card-wall');
             wall.innerHTML = '';
-            
             const filteredCards = currentFilter === '全部' ? cards : cards.filter(c => c.subject === currentFilter);
 
             if (filteredCards.length === 0) {
-                wall.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 py-12">目前「${currentFilter}」分類下沒有記錄的題目，趕快在上方新增吧！</p>`;
+                wall.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 py-10">目前尚無題目資料！</p>`;
                 return;
             }
 
             filteredCards.forEach(c => {
                 let optionsHtml = '';
-                if (c.options) {
-                    if (typeof c.options === 'object') {
-                        let optList = '';
-                        ['A', 'B', 'C', 'D', 'E'].forEach(key => {
-                            if (c.options[key]) {
-                                optList += `<div class="text-xs font-mono text-slate-700 py-1 flex items-start"><span class="font-bold text-slate-400 mr-2.5 bg-slate-100 px-2 py-0.5 rounded-md">(${key})</span><span class="mt-0.5">${c.options[key]}</span></div>`;
-                            }
-                        });
-                        if (optList) {
-                            optionsHtml = `<div class="mb-4 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100/80"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Options</p>${optList}</div>`;
+                if (c.options && typeof c.options === 'object') {
+                    let optList = '';
+                    ['A', 'B', 'C', 'D', 'E'].forEach(key => {
+                        if (c.options[key]) {
+                            optList += `<div class="text-xs font-mono text-slate-700 py-0.5 flex items-start"><span class="font-bold text-slate-400 mr-2 bg-slate-100 px-1.5 py-0.5 rounded">(${key})</span><span class="mt-0.5">${c.options[key]}</span></div>`;
                         }
-                    } else {
-                        optionsHtml = `<div class="mb-4 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100/80"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Options</p><p class="text-xs font-mono text-slate-700 whitespace-pre-wrap">${c.options}</p></div>`;
-                    }
+                    });
+                    if (optList) optionsHtml = `<div class="mb-3 bg-slate-50 p-3 rounded-2xl border border-slate-100"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Options</p>${optList}</div>`;
                 }
 
                 const div = document.createElement('div');
-                div.className = "exam-note p-7 rounded-3xl relative flex flex-col justify-between";
+                div.className = "exam-note p-5 sm:p-6 rounded-3xl relative flex flex-col justify-between";
                 div.innerHTML = `
                     <div>
-                        <div class="absolute top-5 right-5 flex items-center space-x-1.5">
-                            <button onclick="editCard('${c.id}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition shadow-sm">編輯</button>
-                            <button onclick="deleteCard('${c.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2.5 py-1.5 rounded-xl transition">✕</button>
+                        <div class="absolute top-4 right-4 flex items-center space-x-1">
+                            <button onclick="editCard('${c.id}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-xl font-bold">編輯</button>
+                            <button onclick="deleteCard('${c.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1.5 rounded-xl font-bold">✕</button>
                         </div>
-                        
-                        <div class="flex items-center space-x-2 mb-3.5 pr-20">
-                            <span class="text-[11px] font-bold uppercase tracking-wider bg-slate-900 text-white px-3 py-1 rounded-xl shadow-sm">${c.subject}</span>
-                            <span class="text-xs font-medium text-slate-500 truncate">${c.title}</span>
+                        <div class="flex items-center space-x-2 mb-3 pr-20">
+                            <span class="text-[10px] sm:text-[11px] font-bold uppercase bg-slate-900 text-white px-2.5 py-1 rounded-xl">${c.subject}</span>
+                            <span class="text-xs text-slate-500 truncate">${c.title}</span>
                         </div>
-
-                        <div class="mb-4">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Question</p>
-                            <p class="text-sm font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">${c.question}</p>
+                        <div class="mb-3">
+                            <p class="text-xs font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">${c.question}</p>
                         </div>
-
                         ${optionsHtml}
                     </div>
-
-                    <div class="mt-2 pt-4 border-t border-slate-100 space-y-3">
-                        <div class="flex justify-between items-center bg-slate-50/80 p-3 rounded-2xl border border-slate-100/80">
-                            <span class="text-[11px] font-bold text-slate-600">📌 正確答案：</span>
-                            <span class="text-xs font-bold text-indigo-600 bg-white px-3 py-1 rounded-xl shadow-sm border border-slate-100">${c.answer || '未設定'}</span>
+                    <div class="mt-2 pt-3 border-t border-slate-100 space-y-2">
+                        <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <span class="text-[11px] font-bold text-slate-600">📌 答案：</span>
+                            <span class="text-xs font-bold text-indigo-600 bg-white px-2.5 py-0.5 rounded-lg border">${c.answer || '未設'}</span>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold text-slate-600 flex items-center mb-1.5">
-                                💡 解題思路與計算過程
-                            </p>
-                            <p class="text-xs text-slate-600 whitespace-pre-wrap leading-relaxed bg-slate-50/60 p-3.5 rounded-2xl border border-slate-100/80">${c.solution || '尚未記錄解析...'}</p>
+                            <p class="text-[11px] font-bold text-slate-600 mb-1">💡 解題解析：</p>
+                            <p class="text-xs text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100">${c.solution || '無解析'}</p>
                         </div>
                     </div>
                 `;
