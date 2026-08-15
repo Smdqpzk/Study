@@ -576,7 +576,7 @@
                                 <button onclick="addChild(${node.id}, 'item')" class="text-[10px] sm:text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1.5 rounded-xl font-semibold">+項目</button>
                                 <button onclick="addChild(${node.id}, 'textfile')" class="text-[10px] sm:text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1.5 rounded-xl font-semibold">📄筆記</button>
                                 <button onclick="addChild(${node.id}, 'drawing')" class="text-[10px] sm:text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-1.5 rounded-xl font-semibold">🎨畫圖</button>
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">刪除</button>
                             </div>
                         </div>
                     `;
@@ -595,7 +595,7 @@
                             </div>
                             <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
                                 <button onclick="openTextModal(${node.id})" class="text-[10px] sm:text-[11px] bg-amber-100/80 text-amber-800 px-2.5 py-1.5 rounded-xl font-medium">編輯</button>
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">刪除</button>
                             </div>
                         </div>
                     `;
@@ -607,7 +607,7 @@
                             </div>
                             <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
                                 <button onclick="openDrawingModal(${node.id})" class="text-[10px] sm:text-[11px] bg-indigo-100/80 text-indigo-800 px-2.5 py-1.5 rounded-xl font-medium">開啟畫布</button>
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">刪除</button>
                             </div>
                         </div>
                     `;
@@ -619,7 +619,7 @@
                                 <span class="text-xs font-medium ${node.done ? 'line-through text-slate-400' : 'text-slate-700'}">${node.name}</span>
                             </label>
                             <div onclick="event.stopPropagation()">
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">刪除</button>
                             </div>
                         </div>
                     `;
