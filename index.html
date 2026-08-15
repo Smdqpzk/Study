@@ -84,7 +84,7 @@
                         <span>💡</span> 提示：按住項目或資料夾可調整順序；拖入資料夾中可收納，拖曳至下方空白處可移回第一層根目錄！
                     </p>
                     
-                    <!-- 階層式資料夾清單容器 (已改為滑動式 max-h 與 overflow-y-auto) -->
+                    <!-- 階層式資料夾清單容器 -->
                     <div id="tree-container" class="space-y-2 max-h-[420px] overflow-y-auto pr-2 min-h-[140px] p-3 rounded-2xl border-2 border-dashed border-slate-200/60 bg-slate-50/40 transition">
                     </div>
                 </div>
@@ -221,20 +221,17 @@
         </div>
     </div>
 
-    <!-- ================= 美化版自定義 Prompt Modal 結構 ================= -->
+    <!-- 美化版自定義 Prompt Modal 結構 -->
     <div id="custom-prompt-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-slate-100 transform transition-all animate-in fade-in zoom-in-95 duration-200">
-            <!-- 頂部標題列 -->
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
                 <h3 id="custom-prompt-title" class="font-bold text-sm flex items-center gap-2">✨ 請輸入名稱</h3>
                 <button onclick="closeCustomPrompt(false)" class="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition text-xs">✕</button>
             </div>
-            <!-- 內容與輸入框 -->
             <div class="p-6 space-y-4">
                 <p id="custom-prompt-desc" class="text-xs text-slate-500">請在下方輸入您需要的內容：</p>
                 <input id="custom-prompt-input" type="text" placeholder="請在此輸入..." class="w-full p-3.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition shadow-sm">
             </div>
-            <!-- 底部按鈕區 -->
             <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end space-x-2">
                 <button onclick="closeCustomPrompt(false)" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
                 <button onclick="closeCustomPrompt(true)" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition">確定</button>
@@ -249,7 +246,7 @@
 
     <!-- JavaScript 邏輯與 Supabase 整合 -->
     <script>
-        const SUPABASE_URL = 'https://wtubnxzecdtssrjulevk.supabase.co/rest/v1/';
+        const SUPABASE_URL = 'https://wtubnxzecdtssrjulevk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_NHSv-j6dLVR3CbAR1rjHyQ_5Cig1fAO';
         
         let supabaseClient = null;
@@ -300,15 +297,117 @@
             document.getElementById('db-status').className = 'bg-rose-500 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide';
         }
 
-        let treeData = JSON.parse(localStorage.getItem('study_tree')) || [
-            { id: 1, name: "國文", type: "folder", isOpen: true, children: [
-                { id: 2, name: "核心古文三十篇精讀與字音字形", type: "item", done: false },
-                { id: 3, name: "古文三十篇核心重點筆記", type: "textfile", content: "【第1冊】勸學：君子曰：學不可以已...\n【第2冊】師說：古之學者必有師..." }
-            ]},
-            { id: 4, name: "英文", type: "folder", isOpen: false, children: [
-                { id: 5, name: "7000單字進度複習 (Level 5-6)", type: "item", done: false }
-            ]}
-        ];
+        let treeData = [];
+
+        // --- Supabase 知識庫同步載入與巢狀轉換函式 ---
+        async function fetchTreeData() {
+            if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+                treeData = JSON.parse(localStorage.getItem('study_tree')) || getDefaultTree();
+                renderTree(treeData, document.getElementById('tree-container'));
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from('study_trees')
+                .select('*')
+                .order('sort_order', { ascending: true });
+
+            if (error) {
+                console.error('載入知識庫失敗:', error);
+                treeData = getDefaultTree();
+                renderTree(treeData, document.getElementById('tree-container'));
+                return;
+            }
+
+            treeData = buildNestedTree(data || []);
+            if (treeData.length === 0) {
+                treeData = getDefaultTree();
+                await saveEntireTreeToSupabase();
+            }
+            renderTree(treeData, document.getElementById('tree-container'));
+        }
+
+        function getDefaultTree() {
+            return [
+                { id: Date.now() + 1, name: "國文", type: "folder", isOpen: true, children: [
+                    { id: Date.now() + 2, name: "核心古文三十篇精讀與字音字形", type: "item", done: false },
+                    { id: Date.now() + 3, name: "古文三十篇核心重點筆記", type: "textfile", content: "【第1冊】勸學：君子曰：學不可以已...\n【第2冊】師說：古之學者必有師..." }
+                ]},
+                { id: Date.now() + 4, name: "英文", type: "folder", isOpen: false, children: [
+                    { id: Date.now() + 5, name: "7000單字進度複習 (Level 5-6)", type: "item", done: false }
+                ]}
+            ];
+        }
+
+        function buildNestedTree(flatList) {
+            const map = {};
+            const roots = [];
+            flatList.forEach(item => {
+                map[item.id] = { 
+                    id: item.id, 
+                    name: item.name, 
+                    type: item.type, 
+                    isOpen: item.is_open, 
+                    done: item.done, 
+                    content: item.content, 
+                    children: [] 
+                };
+            });
+            flatList.forEach(item => {
+                if (item.parent_id) {
+                    if (map[item.parent_id]) {
+                        map[item.parent_id].children.push(map[item.id]);
+                    }
+                } else {
+                    roots.push(map[item.id]);
+                }
+            });
+            return roots;
+        }
+
+        async function saveAndRenderTree() {
+            localStorage.setItem('study_tree', JSON.stringify(treeData));
+            renderTree(treeData, document.getElementById('tree-container'));
+
+            if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
+            await saveEntireTreeToSupabase();
+        }
+
+        async function saveEntireTreeToSupabase() {
+            // 先抓出雲端現有的所有 id 進行刪除（避免孤兒資料）
+            const { data: existing } = await supabaseClient.from('study_trees').select('id');
+            if (existing && existing.length > 0) {
+                const ids = existing.map(x => x.id);
+                await supabaseClient.from('study_trees').delete().in('id', ids);
+            }
+
+            const flatList = [];
+            let orderCounter = 0;
+
+            const flatten = (nodes, parentId = null) => {
+                nodes.forEach(node => {
+                    flatList.push({
+                        id: node.id,
+                        name: node.name,
+                        type: node.type,
+                        is_open: !!node.isOpen,
+                        done: !!node.done,
+                        content: node.content || null,
+                        parent_id: parentId,
+                        sort_order: orderCounter++
+                    });
+                    if (node.children && node.children.length > 0) {
+                        flatten(node.children, node.id);
+                    }
+                });
+            };
+
+            flatten(treeData);
+            if (flatList.length > 0) {
+                const { error } = await supabaseClient.from('study_trees').insert(flatList);
+                if (error) console.error('同步雲端知識庫失敗:', error);
+            }
+        }
 
         // --- 拖曳功能相關變數與處理函式 ---
         let draggedNodeId = null;
@@ -615,11 +714,6 @@
             closeTextModal();
         }
 
-        function saveAndRenderTree() {
-            localStorage.setItem('study_tree', JSON.stringify(treeData));
-            renderTree(treeData, document.getElementById('tree-container'));
-        }
-
         // --- 智能自動判定單/多選測驗系統 ---
         function loadUserQuiz() {
             const qContainer = document.getElementById('quiz-question');
@@ -894,7 +988,7 @@
         async function deleteCard(id) {
             if (!confirm("確定要刪除這張便條紙嗎？")) return;
 
-            if (!supabaseClient || SUPABASE_URL === 'https://wtubnxzecdtssrjulevk.supabase.co/rest/v1/') {
+            if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
                 cards = cards.filter(c => c.id != id);
                 localStorage.setItem('study_notes_cards', JSON.stringify(cards));
                 updateUI();
@@ -977,7 +1071,7 @@
         }
 
         window.onload = function() {
-            saveAndRenderTree();
+            fetchTreeData();
             fetchCards();
         };
     </script>
