@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>複習紀錄簿</title>
+    <title>學測複習戰情室 & 智能錯題本</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Supabase JS SDK -->
@@ -33,11 +33,15 @@
 
         button, .interactive-btn { transition: all 0.2s ease; }
         button:active { transform: scale(0.96); }
+        
+        #drawing-canvas {
+            touch-action: none; /* 防止手機瀏覽器預設的捲動與縮放行為 */
+        }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
-    <!-- 頂部導覽列 (手機版精簡適配) -->
+    <!-- 頂部導覽列 -->
     <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-sm">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center">
             <h1 class="text-base sm:text-xl font-bold text-slate-800 tracking-wider flex items-center gap-2">
@@ -56,7 +60,7 @@
         <!-- 第一部分：知識管理庫與隨機抽考 -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             
-            <!-- 左側：各科複習資料夾與文字檔知識庫 -->
+            <!-- 左側：各科複習資料夾、文字檔與畫圖筆記知識庫 -->
             <section class="lg:col-span-2 space-y-6">
                 <div class="bg-white p-5 sm:p-7 rounded-3xl shadow-sm border border-slate-100/80">
                     <div class="flex justify-between items-center mb-3 sm:mb-4">
@@ -70,7 +74,7 @@
                         </div>
                     </div>
                     <p class="text-[11px] sm:text-xs text-slate-400 mb-4 flex items-center gap-1.5 leading-relaxed">
-                        <span>💡</span> 提示：支援拖曳排序與收納，變更會秒速自動同步至雲端！
+                        <span>💡</span> 提示：支援文字筆記、手繪圖解與資料夾階層，所有異動秒速自動同步至雲端！
                     </p>
                     
                     <!-- 階層式資料夾清單容器 -->
@@ -109,13 +113,13 @@
                 <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
                     <span class="text-indigo-600">📖</span> 各科錯題與精選試題小檔案
                 </h2>
-                <!-- 科目篩選按鈕列 (手機可橫向捲動) -->
+                <!-- 科目篩選按鈕列 -->
                 <div id="subject-filters" class="flex flex-nowrap overflow-x-auto w-full sm:w-auto gap-2 pb-1 sm:pb-0 max-w-full">
                     <button onclick="filterSubject('全部')" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-900 text-white transition filter-btn shadow-sm shrink-0" data-subject="全部">全部</button>
                 </div>
             </div>
             
-            <!-- 新增 / 修改題目的表單 (手機改為單欄緊湊排列) -->
+            <!-- 新增 / 修改題目的表單 -->
             <div class="bg-slate-50/80 p-4 sm:p-7 rounded-2xl border border-slate-200/80 grid grid-cols-1 md:grid-cols-2 gap-4 shadow-inner">
                 <input type="hidden" id="editing-id" value="">
                 <div>
@@ -160,7 +164,7 @@
 
                 <!-- 正確解答設定 -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5">正確答案 (支援 A 或多選 AB, A,C)</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">正確答案 (支援 A 或多選 AB)</label>
                     <input id="card-answer" type="text" placeholder="例如: A 或 AB" class="w-full p-3 text-xs sm:text-sm border border-slate-200/80 rounded-2xl bg-white font-bold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
                 </div>
 
@@ -184,7 +188,7 @@
 
     </main>
 
-    <!-- 文字檔編輯 Modal 視窗 (手機全螢幕優化) -->
+    <!-- 文字檔編輯 Modal 視窗 -->
     <div id="textfile-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col h-[90vh] sm:h-auto sm:max-h-[90vh] border border-slate-100">
             <div class="bg-slate-900 text-white px-5 sm:px-7 py-4 flex justify-between items-center">
@@ -197,13 +201,58 @@
                     <input id="modal-file-name" type="text" class="w-full p-3 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-slate-50 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900">
                 </div>
                 <div class="flex-grow flex flex-col">
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5">詳細內容 (支援長篇筆記、公式、大綱)</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">詳細內容</label>
                     <textarea id="modal-file-content" placeholder="在此輸入或貼上詳細的筆記內容..." class="w-full h-64 sm:h-80 p-3.5 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-slate-50 font-mono resize-none focus:outline-none focus:ring-2 focus:ring-slate-900"></textarea>
                 </div>
             </div>
             <div class="bg-slate-50 px-5 sm:px-7 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
                 <button onclick="closeTextModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
                 <button onclick="saveTextModal()" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-md">儲存文字檔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 畫圖筆記 Modal 視窗 (新增) -->
+    <div id="drawing-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col h-[92vh] sm:h-auto border border-slate-100">
+            <div class="bg-indigo-900 text-white px-5 sm:px-7 py-4 flex justify-between items-center">
+                <h3 id="drawing-modal-title" class="font-bold text-sm sm:text-base flex items-center gap-2">🎨 手繪圖解筆記</h3>
+                <button onclick="closeDrawingModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center transition text-xs">✕</button>
+            </div>
+            <div class="p-4 sm:p-6 flex-grow flex flex-col space-y-4 overflow-y-auto bg-slate-50/50">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">畫布標題名稱</label>
+                    <input id="drawing-file-name" type="text" class="w-full p-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <!-- 畫筆工具列 -->
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-slate-500">顏色:</span>
+                        <button onclick="setPenColor('#0f172a')" class="w-6 h-6 rounded-full bg-slate-900 border-2 border-white shadow ring-1 ring-slate-300"></button>
+                        <button onclick="setPenColor('#4f46e5')" class="w-6 h-6 rounded-full bg-indigo-600 border-2 border-white shadow ring-1 ring-slate-300"></button>
+                        <button onclick="setPenColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow ring-1 ring-slate-300"></button>
+                        <button onclick="setPenColor('#16a34a')" class="w-6 h-6 rounded-full bg-green-600 border-2 border-white shadow ring-1 ring-slate-300"></button>
+                        <input type="color" id="color-picker" onchange="setPenColor(this.value)" class="w-7 h-7 rounded cursor-pointer border-0 p-0 bg-transparent">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-slate-500">筆寬:</span>
+                        <button onclick="setPenSize(2)" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200">細</button>
+                        <button onclick="setPenSize(5)" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200">中</button>
+                        <button onclick="setPenSize(12)" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200">粗</button>
+                        <button onclick="enableEraser()" class="px-3 py-1 text-xs font-bold rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800">橡皮擦</button>
+                        <button onclick="clearCanvas()" class="px-3 py-1 text-xs font-bold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">清除全部</button>
+                    </div>
+                </div>
+
+                <!-- 畫布區域 -->
+                <div class="relative border-2 border-dashed border-slate-300 rounded-2xl bg-white overflow-hidden shadow-inner flex justify-center items-center">
+                    <canvas id="drawing-canvas" class="w-full h-[320px] sm:h-[380px] cursor-crosshair bg-white"></canvas>
+                </div>
+            </div>
+            <div class="bg-white px-5 sm:px-7 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
+                <button onclick="closeDrawingModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
+                <button onclick="saveDrawingModal()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md">儲存手繪筆記</button>
             </div>
         </div>
     </div>
@@ -239,7 +288,91 @@
         let cards = [];
         let currentFilter = '全部';
         let currentEditingFileId = null;
+        let currentEditingDrawingId = null;
         let promptResolve = null;
+
+        // 畫布相關變數
+        let canvas, ctx, isDrawing = false;
+        let penColor = '#0f172a';
+        let penSize = 3;
+        let isEraserMode = false;
+
+        function initCanvas() {
+            canvas = document.getElementById('drawing-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // 設定實際像素大小以符合顯示大小
+            canvas.width = canvas.parentElement.clientWidth || 600;
+            canvas.height = 380;
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = penColor;
+            ctx.lineWidth = penSize;
+
+            // 滑鼠事件
+            canvas.onmousedown = startDraw;
+            canvas.onmousemove = draw;
+            canvas.onmouseup = stopDraw;
+            canvas.onmouseleave = stopDraw;
+
+            // 觸控事件 (手機支援)
+            canvas.ontouchstart = (e) => { e.preventDefault(); startDraw(e.touches[0]); };
+            canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0]); };
+            canvas.ontouchend = (e) => { e.preventDefault(); stopDraw(); };
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (e.clientX - rect.left) * (canvas.width / rect.width),
+                y: (e.clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            const pos = getMousePos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getMousePos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+        }
+
+        function setPenColor(color) {
+            isEraserMode = false;
+            penColor = color;
+            ctx.strokeStyle = penColor;
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        function setPenSize(size) {
+            penSize = size;
+            ctx.lineWidth = penSize;
+        }
+
+        function enableEraser() {
+            isEraserMode = true;
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = penSize * 3;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 填入白色背景防透明
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = penColor;
+        }
 
         function showCustomPrompt(title = "請輸入名稱", placeholder = "請在此輸入...") {
             return new Promise((resolve) => {
@@ -306,11 +439,8 @@
         function getDefaultTree() {
             return [
                 { id: Date.now() + 1, name: "國文", type: "folder", isOpen: true, children: [
-                    { id: Date.now() + 2, name: "核心古文三十篇精讀", type: "item", done: false },
-                    { id: Date.now() + 3, name: "古文重點筆記", type: "textfile", content: "【第1冊】勸學..." }
-                ]},
-                { id: Date.now() + 4, name: "英文", type: "folder", isOpen: false, children: [
-                    { id: Date.now() + 5, name: "7000單字複習", type: "item", done: false }
+                    { id: Date.now() + 2, name: "古文重點筆記", type: "textfile", content: "【第1冊】勸學..." },
+                    { id: Date.now() + 3, name: "字音字形圖解", type: "drawing", content: "" }
                 ]}
             ];
         }
@@ -374,13 +504,6 @@
         function handleDragOver(e) { e.preventDefault(); }
         function handleDragEnter(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
         function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-        function handleDropToRoot(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            if (draggedNodeId === null) return;
-            let draggedNode = removeNodeFromTree(treeData, draggedNodeId);
-            if (draggedNode) { treeData.push(draggedNode); draggedNodeId = null; saveAndRenderTree(); }
-        }
 
         function handleDrop(e, targetId) {
             e.stopPropagation(); e.preventDefault();
@@ -450,9 +573,10 @@
                                 <span class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">📂 ${node.name}</span>
                             </div>
                             <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
-                                <button onclick="addChild(${node.id}, 'item')" class="text-[10px] sm:text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 sm:px-2.5 py-1.5 rounded-xl font-semibold">+項目</button>
-                                <button onclick="addChild(${node.id}, 'textfile')" class="text-[10px] sm:text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 sm:px-2.5 py-1.5 rounded-xl font-semibold">📄筆記</button>
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">🗑️</button>
+                                <button onclick="addChild(${node.id}, 'item')" class="text-[10px] sm:text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1.5 rounded-xl font-semibold">+項目</button>
+                                <button onclick="addChild(${node.id}, 'textfile')" class="text-[10px] sm:text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1.5 rounded-xl font-semibold">📄筆記</button>
+                                <button onclick="addChild(${node.id}, 'drawing')" class="text-[10px] sm:text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-1.5 rounded-xl font-semibold">🎨畫圖</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
                             </div>
                         </div>
                     `;
@@ -471,7 +595,19 @@
                             </div>
                             <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
                                 <button onclick="openTextModal(${node.id})" class="text-[10px] sm:text-[11px] bg-amber-100/80 text-amber-800 px-2.5 py-1.5 rounded-xl font-medium">編輯</button>
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">🗑️</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                } else if (node.type === "drawing") {
+                    wrapper.innerHTML = `
+                        <div class="flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/60 border border-transparent hover:border-indigo-200/80 transition-all">
+                            <div onclick="openDrawingModal(${node.id})" class="flex items-center space-x-2 cursor-pointer flex-grow select-none">
+                                <span class="text-xs font-semibold text-indigo-700 hover:underline">🎨 ${node.name}</span>
+                            </div>
+                            <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                                <button onclick="openDrawingModal(${node.id})" class="text-[10px] sm:text-[11px] bg-indigo-100/80 text-indigo-800 px-2.5 py-1.5 rounded-xl font-medium">開啟畫布</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
                             </div>
                         </div>
                     `;
@@ -483,7 +619,7 @@
                                 <span class="text-xs font-medium ${node.done ? 'line-through text-slate-400' : 'text-slate-700'}">${node.name}</span>
                             </label>
                             <div onclick="event.stopPropagation()">
-                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">🗑️</button>
+                                <button onclick="deleteNode(${node.id})" class="text-xs text-rose-400 hover:text-rose-600 p-1.5 rounded-xl">Delete</button>
                             </div>
                         </div>
                     `;
@@ -504,7 +640,7 @@
         }
 
         async function addChild(parentId, type) {
-            let title = type === 'folder' ? "新增子資料夾名稱" : type === 'textfile' ? "新增文字筆記名稱" : "新增複習項目名稱";
+            let title = type === 'folder' ? "新增子資料夾名稱" : type === 'textfile' ? "新增文字筆記名稱" : type === 'drawing' ? "新增手繪圖解名稱" : "新增複習項目名稱";
             let name = await showCustomPrompt(title, "請輸入...");
             if (!name) return;
             
@@ -512,7 +648,15 @@
                 nodes.forEach(n => {
                     if (n.id === parentId) {
                         if (!n.children) n.children = [];
-                        n.children.push({ id: Date.now(), name, type, isOpen: false, children: [], done: false, content: type === 'textfile' ? '# 筆記內容\n' : undefined });
+                        n.children.push({ 
+                            id: Date.now(), 
+                            name, 
+                            type, 
+                            isOpen: false, 
+                            children: [], 
+                            done: false, 
+                            content: type === 'textfile' ? '# 筆記內容\n' : (type === 'drawing' ? '' : undefined) 
+                        });
                         n.isOpen = true;
                     } else if (n.children) findAndAdd(n.children);
                 });
@@ -546,6 +690,7 @@
             saveAndRenderTree();
         }
 
+        // 文字筆記 Modal
         function openTextModal(id) {
             currentEditingFileId = id;
             let targetFile = null;
@@ -582,6 +727,62 @@
             findAndUpdate(treeData);
             saveAndRenderTree();
             closeTextModal();
+        }
+
+        // 畫圖筆記 Modal
+        function openDrawingModal(id) {
+            currentEditingDrawingId = id;
+            let targetDrawing = null;
+            const findNode = (nodes) => {
+                for (let n of nodes) {
+                    if (n.id === id) { targetDrawing = n; return; }
+                    if (n.children) findNode(n.children);
+                }
+            };
+            findNode(treeData);
+            if (targetDrawing) {
+                document.getElementById('drawing-modal-title').innerText = `🎨 編輯手繪：${targetDrawing.name}`;
+                document.getElementById('drawing-file-name').value = targetDrawing.name;
+                document.getElementById('drawing-modal').classList.remove('hidden');
+                
+                // 初始化畫布並載入舊圖片（如果有）
+                setTimeout(() => {
+                    initCanvas();
+                    if (targetDrawing.content) {
+                        const img = new Image();
+                        img.onload = () => {
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        };
+                        img.src = targetDrawing.content;
+                    } else {
+                        clearCanvas();
+                    }
+                }, 50);
+            }
+        }
+
+        function closeDrawingModal() {
+            document.getElementById('drawing-modal').classList.add('hidden');
+            currentEditingDrawingId = null;
+        }
+
+        function saveDrawingModal() {
+            if (!currentEditingDrawingId) return;
+            const newName = document.getElementById('drawing-file-name').value.trim();
+            const dataURL = canvas.toDataURL('image/png'); // 將畫布轉為圖片 Base64 格式儲存
+            
+            const findAndUpdate = (nodes) => {
+                nodes.forEach(n => {
+                    if (n.id === currentEditingDrawingId) { 
+                        n.name = newName || '手繪圖解'; 
+                        n.content = dataURL; 
+                    }
+                    else if (n.children) findAndUpdate(n.children);
+                });
+            };
+            findAndUpdate(treeData);
+            saveAndRenderTree();
+            closeDrawingModal();
         }
 
         // --- 抽考系統 ---
@@ -683,7 +884,7 @@
             }
         }
 
-        // --- 便條紙題庫 CRUD (即時同步) ---
+        // --- 便條紙題庫 CRUD ---
         async function fetchCards() {
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
                 cards = JSON.parse(localStorage.getItem('study_notes_cards')) || [];
