@@ -3,49 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學測複習筆記本</title>
+    <title>學測複習筆記本｜Study Notes</title>
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="學測複習、錯題整理、知識樹與每日隨機抽考工具">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
-        
-        .exam-note {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;800&display=swap');
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --ink: #172033;
+            --muted: #64748b;
+            --line: #e2e8f0;
         }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background:
+                radial-gradient(circle at 8% 0%, rgba(99,102,241,.11), transparent 28rem),
+                radial-gradient(circle at 92% 8%, rgba(139,92,246,.10), transparent 26rem),
+                #f7f8fc;
+            color: var(--ink);
+        }
+
+        ::selection { background: #6366f1; color: white; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .exam-note {
+            position: relative;
+            background: rgba(255,255,255,.90);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226,232,240,.9);
+            box-shadow: 0 8px 30px rgba(15,23,42,.055);
+            transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+        }
+
+        .exam-note::before {
+            content: "";
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            top: 0;
+            height: 3px;
+            border-radius: 0 0 999px 999px;
+            background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+            opacity: .75;
+        }
+
         .exam-note:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07);
-            border-color: #cbd5e1;
+            transform: translateY(-4px);
+            box-shadow: 0 16px 38px rgba(15,23,42,.10);
+            border-color: #c7d2fe;
         }
 
         .draggable-item { cursor: grab; }
         .draggable-item:active { cursor: grabbing; }
+
         .drag-over {
-            background-color: #e0e7ff !important;
-            border: 2px dashed #6366f1 !important;
+            background: rgba(224,231,255,.65) !important;
+            outline: 2px dashed #6366f1 !important;
+            outline-offset: 2px;
+            border-radius: 14px;
         }
 
-        button, .interactive-btn { transition: all 0.2s ease; }
-        button:active { transform: scale(0.96); }
-        
+        button, input, textarea, .interactive-btn {
+            transition: all .18s ease;
+        }
+
+        button:active { transform: scale(.97); }
+
+        button:focus-visible, input:focus-visible, textarea:focus-visible {
+            outline: 3px solid rgba(99,102,241,.20);
+            outline-offset: 2px;
+        }
+
+        input:hover, textarea:hover { border-color: #cbd5e1; }
+
+        input:focus, textarea:focus {
+            background: #fff;
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 4px rgba(99,102,241,.09);
+        }
+
+        .section-card {
+            background: rgba(255,255,255,.90);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 35px rgba(15,23,42,.055);
+        }
+
+        .hero-glow { box-shadow: 0 18px 50px rgba(79,70,229,.20); }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            background: currentColor;
+            box-shadow: 0 0 0 4px rgba(255,255,255,.16);
+        }
+
         #drawing-canvas {
-            touch-action: none; /* 防止手機瀏覽器預設的捲動與縮放行為 */
+            touch-action: none;
+            display: block;
+            width: 100%;
+            height: 380px;
+        }
+
+
+        /* ===== 高質感彈窗系統 ===== */
+        .app-modal {
+            animation: modalFade .18s ease-out;
+        }
+        .app-modal-panel {
+            animation: modalPop .22s cubic-bezier(.2,.8,.2,1);
+        }
+        @keyframes modalFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: translateY(14px) scale(.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-header {
+            position: relative;
+            overflow: hidden;
+        }
+        .modal-header::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            right: -55px;
+            top: -80px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.10);
+            pointer-events: none;
+        }
+        .modal-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,.10);
+            color: rgba(255,255,255,.75);
+            transition: .18s ease;
+        }
+        .modal-close:hover {
+            background: rgba(255,255,255,.22);
+            color: #fff;
+            transform: rotate(4deg);
+        }
+        .modal-footer {
+            background: linear-gradient(to top, #f8fafc, #fff);
+        }
+        .modal-primary {
+            box-shadow: 0 8px 20px rgba(79,70,229,.20);
+        }
+        .category-toolbar {
+            background: linear-gradient(135deg, rgba(248,250,252,.95), rgba(241,245,249,.72));
+            border: 1px solid #e2e8f0;
+        }
+        .category-filter {
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #475569;
+            transition: .18s ease;
+        }
+        .category-filter:hover {
+            border-color: #a5b4fc;
+            background: #eef2ff;
+            color: #4338ca;
+            transform: translateY(-1px);
+        }
+        .category-filter.active {
+            border-color: #4f46e5;
+            background: linear-gradient(135deg,#4f46e5,#6366f1);
+            color: white;
+            box-shadow: 0 6px 16px rgba(79,70,229,.18);
+        }
+        .question-type-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 999px;
+            letter-spacing: .02em;
+        }
+        .question-card-actions button {
+            opacity: .75;
+        }
+        .question-card-actions button:hover {
+            opacity: 1;
+        }
+        .dialog-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: #eef2ff;
+            color: #4f46e5;
+            flex-shrink: 0;
+        }
+
+
+        .canvas-tool, .canvas-size-btn, .canvas-action-btn {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            transition: .16s ease;
+            white-space: nowrap;
+        }
+        .canvas-tool:hover, .canvas-size-btn:hover, .canvas-action-btn:hover {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+            color: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        #canvas-stage-inner.eraser-mode #drawing-canvas {
+            cursor: cell;
+        }
+
+        .canvas-tool.active {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: white;
+            box-shadow: 0 5px 14px rgba(79,70,229,.20);
+        }
+        .canvas-action-btn.danger {
+            color: #e11d48;
+            background: #fff1f2;
+            border-color: #fecdd3;
+        }
+        .canvas-action-btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .canvas-stage {
+            position: relative;
+        }
+        .canvas-grid-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(#cbd5e1 1px, transparent 1px),
+                linear-gradient(90deg, #cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: .28;
+            display: none;
+        }
+        .canvas-grid-overlay.show { display: block; }
+
+
+        .canvas-workspace {
+            height: min(60vh, 760px);
+            min-height: 360px;
+            overscroll-behavior: contain;
+        }
+        .canvas-viewport {
+            width: max-content;
+            height: max-content;
+            min-width: 100%;
+            min-height: 100%;
+            padding: 32px;
+        }
+        .canvas-stage {
+            position: relative;
+            width: 1200px;
+            height: 700px;
+            transform-origin: top left;
+        }
+        .canvas-stage #drawing-canvas,
+        .canvas-stage .canvas-grid-overlay {
+            width: 1200px !important;
+            height: 700px !important;
+        }
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 900;
+        }
+        .zoom-btn:hover {
+            background: #eef2ff;
+            color: #4338ca;
+            border-color: #c7d2fe;
+        }
+        @media (max-width: 640px) {
+            .canvas-workspace { height: 50vh; min-height: 280px; }
+            .canvas-viewport { padding: 18px; }
+            .canvas-stage { width: 900px; height: 560px; }
+            .canvas-stage #drawing-canvas,
+            .canvas-stage .canvas-grid-overlay { width: 900px !important; height: 560px !important; }
+        }
+
+        @media (max-width: 640px) {
+            #drawing-canvas { height: 320px; }
+            .exam-note:hover { transform: none; }
         }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
     <!-- 頂部導覽列 -->
-    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-sm">
+    <header class="bg-white/75 backdrop-blur-xl border-b border-white/80 sticky top-0 z-40 shadow-[0_4px_24px_rgba(15,23,42,.05)]">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center">
             <h1 class="text-base sm:text-xl font-bold text-slate-800 tracking-wider flex items-center gap-2">
-                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 text-xs sm:text-sm"></span> 
+                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 text-xs sm:text-sm">📚</span> 
                 學測複習筆記本
             </h1>
             <div class="flex items-center space-x-2">
@@ -62,7 +351,7 @@
             
             <!-- 左側：各科複習資料夾、文字檔與畫圖筆記知識庫 -->
             <section class="lg:col-span-2 space-y-6">
-                <div class="bg-white p-5 sm:p-7 rounded-3xl shadow-sm border border-slate-100/80">
+                <div class="section-card p-5 sm:p-7 rounded-[28px] border border-white/80">
                     <div class="flex justify-between items-center mb-3 sm:mb-4">
                         <div class="flex items-center space-x-3">
                             <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -85,7 +374,7 @@
 
             <!-- 右側：每日隨機抽考 -->
             <section class="space-y-6">
-                <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-5 sm:p-7 rounded-3xl text-white shadow-xl shadow-indigo-600/10 relative overflow-hidden">
+                <div class="hero-glow bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-5 sm:p-7 rounded-[28px] text-white relative overflow-hidden">
                     <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
 
                     <div class="flex justify-between items-center mb-3 sm:mb-4 relative z-10">
@@ -114,9 +403,7 @@
                     <span class="text-indigo-600">📖</span> 各科錯題與精選試題小檔案
                 </h2>
                 <!-- 科目篩選按鈕列 -->
-                <div id="subject-filters" class="flex flex-nowrap overflow-x-auto w-full sm:w-auto gap-2 pb-1 sm:pb-0 max-w-full">
-                    <button onclick="filterSubject('全部')" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-900 text-white transition filter-btn shadow-sm shrink-0" data-subject="全部">全部</button>
-                </div>
+                <div id="subject-filters" class="flex flex-nowrap overflow-x-auto w-full sm:w-auto gap-2 pb-1 sm:pb-0 max-w-full"></div>
             </div>
             
             <!-- 新增 / 修改題目的表單 -->
@@ -127,7 +414,10 @@
                     <input id="card-subject" type="text" placeholder="例如: 數學A、物理、化學" class="w-full p-3 text-xs sm:text-sm border border-slate-200/80 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5">章節 / 題目標籤</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 flex items-center justify-between">
+                            <span>章節 / 題目分類</span>
+                            <span class="text-[10px] text-indigo-500 font-semibold">建議填：函數、力學、古文…</span>
+                        </label>
                     <input id="card-title" type="text" placeholder="例如: 向量與空間 / 113學測單選3" class="w-full p-3 text-xs sm:text-sm border border-slate-200/80 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
                 </div>
                 <div class="col-span-full">
@@ -189,11 +479,14 @@
     </main>
 
     <!-- 文字檔編輯 Modal 視窗 -->
-    <div id="textfile-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col h-[90vh] sm:h-auto sm:max-h-[90vh] border border-slate-100">
-            <div class="bg-slate-900 text-white px-5 sm:px-7 py-4 flex justify-between items-center">
-                <h3 id="modal-title" class="font-bold text-sm sm:text-base flex items-center gap-2">📄 編輯文字筆記</h3>
-                <button onclick="closeTextModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center transition text-xs">✕</button>
+    <div id="textfile-modal" class="app-modal fixed inset-0 bg-slate-950/55 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
+        <div class="app-modal-panel bg-white rounded-[28px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col h-[90vh] sm:h-auto sm:max-h-[90vh] border border-white/70">
+            <div class="modal-header bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white px-5 sm:px-7 py-5 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-slate-300 font-bold tracking-[.18em] uppercase mb-1">Study Notes</p>
+                    <h3 id="modal-title" class="font-bold text-sm sm:text-base flex items-center gap-2">📄 編輯文字筆記</h3>
+                </div>
+                <button onclick="closeTextModal()" class="modal-close">✕</button>
             </div>
             <div class="p-4 sm:p-7 flex-grow flex flex-col space-y-4 overflow-y-auto">
                 <div>
@@ -205,19 +498,22 @@
                     <textarea id="modal-file-content" placeholder="在此輸入或貼上詳細的筆記內容..." class="w-full h-64 sm:h-80 p-3.5 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-slate-50 font-mono resize-none focus:outline-none focus:ring-2 focus:ring-slate-900"></textarea>
                 </div>
             </div>
-            <div class="bg-slate-50 px-5 sm:px-7 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
+            <div class="modal-footer px-5 sm:px-7 py-4 border-t border-slate-100 flex justify-end space-x-2">
                 <button onclick="closeTextModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
-                <button onclick="saveTextModal()" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-md">儲存文字檔</button>
+                <button onclick="saveTextModal()" class="px-6 py-2.5 modal-primary bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-md px-6 py-2.5">儲存文字檔</button>
             </div>
         </div>
     </div>
 
-    <!-- 畫圖筆記 Modal 視窗 (新增) -->
-    <div id="drawing-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col h-[92vh] sm:h-auto border border-slate-100">
-            <div class="bg-indigo-900 text-white px-5 sm:px-7 py-4 flex justify-between items-center">
-                <h3 id="drawing-modal-title" class="font-bold text-sm sm:text-base flex items-center gap-2">🎨 手繪圖解筆記</h3>
-                <button onclick="closeDrawingModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center transition text-xs">✕</button>
+    <!-- 畫圖筆記 Modal 視窗 -->
+    <div id="drawing-modal" class="app-modal fixed inset-0 bg-slate-950/55 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
+        <div class="app-modal-panel bg-white rounded-[28px] shadow-2xl w-full max-w-[1500px] overflow-hidden flex flex-col h-[96vh] sm:h-[94vh] border border-white/70">
+            <div class="modal-header bg-gradient-to-br from-indigo-700 via-indigo-800 to-violet-900 text-white px-5 sm:px-7 py-5 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-indigo-200 font-bold tracking-[.18em] uppercase mb-1">Canvas Studio</p>
+                    <h3 id="drawing-modal-title" class="font-bold text-sm sm:text-base flex items-center gap-2">🎨 手繪圖解筆記</h3>
+                </div>
+                <button onclick="closeDrawingModal()" class="modal-close">✕</button>
             </div>
             <div class="p-4 sm:p-6 flex-grow flex flex-col space-y-4 overflow-y-auto bg-slate-50/50">
                 <div>
@@ -225,58 +521,113 @@
                     <input id="drawing-file-name" type="text" class="w-full p-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 
-                <!-- 畫筆工具列 -->
-                <div class="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs font-bold text-slate-500">顏色:</span>
-                        <button onclick="setPenColor('#0f172a')" class="w-6 h-6 rounded-full bg-slate-900 border-2 border-white shadow ring-1 ring-slate-300"></button>
-                        <button onclick="setPenColor('#4f46e5')" class="w-6 h-6 rounded-full bg-indigo-600 border-2 border-white shadow ring-1 ring-slate-300"></button>
-                        <button onclick="setPenColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow ring-1 ring-slate-300"></button>
-                        <button onclick="setPenColor('#16a34a')" class="w-6 h-6 rounded-full bg-green-600 border-2 border-white shadow ring-1 ring-slate-300"></button>
-                        <input type="color" id="color-picker" onchange="setPenColor(this.value)" class="w-7 h-7 rounded cursor-pointer border-0 p-0 bg-transparent">
+                <!-- 畫布專業工具列 -->
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-[10px] font-extrabold text-slate-400 mr-1">工具</span>
+                        <button onclick="setDrawTool('pen')" data-tool="pen" class="canvas-tool active">✏️ 畫筆</button>
+                        <button onclick="setDrawTool('highlighter')" data-tool="highlighter" class="canvas-tool">🖍️ 螢光筆</button>
+                        <button onclick="setDrawTool('line')" data-tool="line" class="canvas-tool">╱ 直線</button>
+                        <button onclick="setDrawTool('rect')" data-tool="rect" class="canvas-tool">▭ 方框</button>
+                        <button onclick="setDrawTool('circle')" data-tool="circle" class="canvas-tool">○ 圓形</button>
+                        <button onclick="setDrawTool('pan')" data-tool="pan" class="canvas-tool">✋ 移動畫布</button>
+                        <button onclick="enableEraser()" data-tool="eraser" class="canvas-tool">🧽 橡皮擦</button>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs font-bold text-slate-500">筆寬:</span>
-                        <button onclick="setPenSize(2)" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200">細</button>
-                        <button onclick="setPenSize(5)" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200">中</button>
-                        <button onclick="setPenSize(12)" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200">粗</button>
-                        <button onclick="enableEraser()" class="px-3 py-1 text-xs font-bold rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800">橡皮擦</button>
-                        <button onclick="clearCanvas()" class="px-3 py-1 text-xs font-bold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">清除全部</button>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-[10px] font-extrabold text-slate-400 mr-1">顏色</span>
+                        <button onclick="setPenColor('#0f172a')" class="w-7 h-7 rounded-full bg-slate-900 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
+                        <button onclick="setPenColor('#4f46e5')" class="w-7 h-7 rounded-full bg-indigo-600 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
+                        <button onclick="setPenColor('#dc2626')" class="w-7 h-7 rounded-full bg-red-600 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
+                        <button onclick="setPenColor('#16a34a')" class="w-7 h-7 rounded-full bg-green-600 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
+                        <button onclick="setPenColor('#f59e0b')" class="w-7 h-7 rounded-full bg-amber-500 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
+                        <input type="color" id="color-picker" onchange="setPenColor(this.value)" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent">
+
+                        <span class="text-[10px] font-extrabold text-slate-400 ml-2">筆寬</span>
+                        <button onclick="setPenSize(2)" class="canvas-size-btn">細</button>
+                        <button onclick="setPenSize(5)" class="canvas-size-btn">中</button>
+                        <button onclick="setPenSize(12)" class="canvas-size-btn">粗</button>
+
+                        <span class="grow"></span>
+                        <button onclick="undoCanvas()" class="canvas-action-btn" title="復原 Ctrl+Z">↶ 復原</button>
+                        <button onclick="redoCanvas()" class="canvas-action-btn" title="重做 Ctrl+Y">↷ 重做</button>
+                        <button onclick="toggleGrid()" id="grid-btn" class="canvas-action-btn">▦ 格線</button>
+                        <button onclick="clearCanvas()" class="canvas-action-btn danger">清空</button>
                     </div>
                 </div>
 
-                <!-- 畫布區域 -->
-                <div class="relative border-2 border-dashed border-slate-300 rounded-2xl bg-white overflow-hidden shadow-inner flex justify-center items-center">
-                    <canvas id="drawing-canvas" class="w-full h-[320px] sm:h-[380px] cursor-crosshair bg-white"></canvas>
+                <!-- 放大畫布工作區 -->
+                <div class="canvas-workspace rounded-2xl border border-slate-200 bg-slate-100 overflow-auto shadow-inner">
+                    <div id="canvas-viewport" class="canvas-viewport">
+                        <div id="canvas-stage-inner" class="canvas-stage relative bg-white shadow-xl">
+                            <canvas id="drawing-canvas" class="cursor-crosshair bg-white"></canvas>
+                            <div id="canvas-grid-overlay" class="canvas-grid-overlay"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-2xl px-3 py-2.5 shadow-sm">
+                    <span class="text-[10px] font-extrabold text-slate-400">畫布縮放</span>
+                    <button onclick="zoomCanvas(-0.1)" class="zoom-btn">−</button>
+                    <input id="canvas-zoom-range" type="range" min="0.5" max="2.5" step="0.1" value="1"
+                           oninput="setCanvasZoom(parseFloat(this.value))" class="w-28 sm:w-40 accent-indigo-600">
+                    <button onclick="zoomCanvas(0.1)" class="zoom-btn">＋</button>
+                    <span id="canvas-zoom-label" class="min-w-[48px] text-center text-xs font-extrabold text-indigo-600">100%</span>
+                    <button onclick="setCanvasZoom(1)" class="canvas-action-btn">100%</button>
+                    <button onclick="fitCanvas()" class="canvas-action-btn">適合視窗</button>
+                    <button onclick="resetCanvasPosition()" class="canvas-action-btn">置中</button>
                 </div>
             </div>
             <div class="bg-white px-5 sm:px-7 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
                 <button onclick="closeDrawingModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
-                <button onclick="saveDrawingModal()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md">儲存手繪筆記</button>
+                <button onclick="saveDrawingModal()" class="px-6 py-2.5 modal-primary bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md px-6 py-2.5">儲存手繪筆記</button>
             </div>
         </div>
     </div>
 
     <!-- 自定義 Prompt Modal -->
-    <div id="custom-prompt-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-slate-100">
-            <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
-                <h3 id="custom-prompt-title" class="font-bold text-sm flex items-center gap-2">✨ 請輸入名稱</h3>
-                <button onclick="closeCustomPrompt(false)" class="w-7 h-7 rounded-xl bg-white/10 text-slate-300 hover:text-white flex items-center justify-center text-xs">✕</button>
+    <div id="custom-prompt-modal" class="app-modal fixed inset-0 bg-slate-950/55 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="app-modal-panel bg-white rounded-[28px] shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-white/70">
+            <div class="modal-header bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 text-white px-5 py-5 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-indigo-200 font-bold tracking-[.18em] uppercase mb-1">Quick Action</p>
+                    <h3 id="custom-prompt-title" class="font-bold text-sm flex items-center gap-2">✨ 請輸入名稱</h3>
+                </div>
+                <button onclick="closeCustomPrompt(false)" class="modal-close">✕</button>
             </div>
             <div class="p-5 space-y-3">
                 <p id="custom-prompt-desc" class="text-xs text-slate-500">請在下方輸入您需要的內容：</p>
                 <input id="custom-prompt-input" type="text" placeholder="請在此輸入..." class="w-full p-3 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
-            <div class="bg-slate-50 px-5 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
+            <div class="modal-footer px-5 py-4 border-t border-slate-100 flex justify-end space-x-2">
                 <button onclick="closeCustomPrompt(false)" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl">取消</button>
                 <button onclick="closeCustomPrompt(true)" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl">確定</button>
             </div>
         </div>
     </div>
 
+
+    <!-- 通用確認 / 提示 Dialog -->
+    <div id="app-dialog" class="app-modal fixed inset-0 bg-slate-950/55 backdrop-blur-md z-[60] flex items-center justify-center hidden p-4">
+        <div class="app-modal-panel bg-white rounded-[28px] shadow-2xl w-full max-w-sm overflow-hidden border border-white/80">
+            <div class="p-6 sm:p-7">
+                <div class="flex items-start gap-4">
+                    <div id="dialog-icon" class="dialog-icon">✨</div>
+                    <div class="min-w-0 flex-1">
+                        <h3 id="dialog-title" class="font-extrabold text-slate-900 text-base">提示</h3>
+                        <p id="dialog-message" class="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed whitespace-pre-wrap"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
+                <button id="dialog-cancel" class="hidden px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl">取消</button>
+                <button id="dialog-ok" class="modal-primary px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl">確定</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-white border-t border-slate-200 py-5 text-center text-xs text-slate-400">
-        堅持下去，倒數的每一天都在毀滅！加油！
+        📚 今天多讀一點，明天就多一分從容。一步一步，把會的變成穩的。
     </footer>
 
     <!-- JavaScript 邏輯與即時同步 -->
@@ -291,87 +642,512 @@
         let currentEditingDrawingId = null;
         let promptResolve = null;
 
-        // 畫布相關變數
+        // ===== 專業畫布系統 =====
         let canvas, ctx, isDrawing = false;
         let penColor = '#0f172a';
         let penSize = 3;
         let isEraserMode = false;
+        let drawTool = 'pen';
+        let gridVisible = false;
+        let canvasZoom = 1;
+        let panX = 0, panY = 0, isPanning = false, panStart = null;
+        let baseCanvasWidth = 1200;
+        let baseCanvasHeight = 700;
+        let history = [];
+        let historyIndex = -1;
+        let shapeStart = null;
+        let previewSnapshot = null;
+
+        function canvasSize() {
+            return { width: baseCanvasWidth, height: baseCanvasHeight };
+        }
+
+        function saveCanvasState() {
+            if (!canvas || !ctx) return;
+            try {
+                const state = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                history = history.slice(0, historyIndex + 1);
+                history.push(state);
+                if (history.length > 30) history.shift();
+                historyIndex = history.length - 1;
+                updateCanvasHistoryButtons();
+            } catch (err) {
+                console.warn('無法建立畫布歷史狀態', err);
+            }
+        }
+
+        function restoreCanvasState(state) {
+            if (!canvas || !ctx || !state) return;
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            ctx.putImageData(state, 0, 0);
+            ctx.restore();
+            applyToolStyle();
+        }
+
+        function updateCanvasHistoryButtons() {
+            const undo = document.querySelector('[onclick="undoCanvas()"]');
+            const redo = document.querySelector('[onclick="redoCanvas()"]');
+            if (undo) undo.disabled = historyIndex <= 0;
+            if (redo) redo.disabled = historyIndex >= history.length - 1;
+        }
+
+        function undoCanvas() {
+            if (historyIndex <= 0) return;
+            historyIndex--;
+            restoreCanvasState(history[historyIndex]);
+            updateCanvasHistoryButtons();
+        }
+
+        function redoCanvas() {
+            if (historyIndex >= history.length - 1) return;
+            historyIndex++;
+            restoreCanvasState(history[historyIndex]);
+            updateCanvasHistoryButtons();
+        }
 
         function initCanvas() {
             canvas = document.getElementById('drawing-canvas');
-            ctx = canvas.getContext('2d');
-            
-            // 設定實際像素大小以符合顯示大小
-            canvas.width = canvas.parentElement.clientWidth || 600;
-            canvas.height = 380;
+            ctx = canvas.getContext('2d', { alpha: false });
 
+            const mobile = window.innerWidth <= 640;
+            baseCanvasWidth = mobile ? 900 : 1200;
+            baseCanvasHeight = mobile ? 560 : 700;
+
+            const stage = document.getElementById('canvas-stage-inner');
+            stage.style.width = baseCanvasWidth + 'px';
+            stage.style.height = baseCanvasHeight + 'px';
+            canvas.style.width = baseCanvasWidth + 'px';
+            canvas.style.height = baseCanvasHeight + 'px';
+
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            canvas.width = Math.floor(baseCanvasWidth * dpr);
+            canvas.height = Math.floor(baseCanvasHeight * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, baseCanvasWidth, baseCanvasHeight);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.strokeStyle = penColor;
-            ctx.lineWidth = penSize;
 
-            // 滑鼠事件
-            canvas.onmousedown = startDraw;
-            canvas.onmousemove = draw;
-            canvas.onmouseup = stopDraw;
-            canvas.onmouseleave = stopDraw;
+            history = [];
+            historyIndex = -1;
+            shapeStart = null;
+            previewSnapshot = null;
+            canvasZoom = 1;
+            panX = 0;
+            panY = 0;
+            applyCanvasTransform();
+            applyToolStyle();
 
-            // 觸控事件 (手機支援)
-            canvas.ontouchstart = (e) => { e.preventDefault(); startDraw(e.touches[0]); };
-            canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0]); };
-            canvas.ontouchend = (e) => { e.preventDefault(); stopDraw(); };
+            canvas.onpointerdown = (e) => {
+                e.preventDefault();
+                canvas.setPointerCapture?.(e.pointerId);
+
+                if (drawTool === 'pan' || spacePan || e.button === 1 || e.shiftKey) {
+                    isPanning = true;
+                    panStart = { clientX: e.clientX, clientY: e.clientY, x: panX, y: panY };
+                    document.getElementById('canvas-stage-inner')?.classList.add('pan-mode', 'panning');
+                    return;
+                }
+
+                startDraw(e);
+            };
+
+            canvas.onpointermove = (e) => {
+                e.preventDefault();
+
+                if (isPanning && panStart) {
+                    panX = panStart.x + (e.clientX - panStart.clientX);
+                    panY = panStart.y + (e.clientY - panStart.clientY);
+                    applyCanvasTransform();
+                    return;
+                }
+
+                lastPointerPosition = getMousePos(e);
+                draw(e);
+            };
+
+            canvas.onpointerup = (e) => {
+                e.preventDefault();
+
+                if (isPanning) {
+                    isPanning = false;
+                    panStart = null;
+                    document.getElementById('canvas-stage-inner')?.classList.remove('panning');
+                    return;
+                }
+
+                stopDraw();
+            };
+
+            canvas.onpointercancel = () => {
+                isPanning = false;
+                panStart = null;
+                isDrawing = false;
+                document.getElementById('canvas-stage-inner')?.classList.remove('panning');
+            };
+
+            saveCanvasState();
+            updateCanvasHistoryButtons();
         }
 
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
             return {
-                x: (e.clientX - rect.left) * (canvas.width / rect.width),
-                y: (e.clientY - rect.top) * (canvas.height / rect.height)
+                x: (e.clientX - rect.left) / canvasZoom,
+                y: (e.clientY - rect.top) / canvasZoom
             };
         }
 
+        function applyCanvasTransform() {
+            const stage = document.getElementById('canvas-stage-inner');
+            const viewport = document.getElementById('canvas-viewport');
+            if (!stage || !viewport) return;
+
+            stage.style.transform =
+                `translate(${panX}px, ${panY}px) scale(${canvasZoom})`;
+
+            viewport.style.width = Math.ceil(baseCanvasWidth * canvasZoom + 64 + Math.abs(panX)) + 'px';
+            viewport.style.height = Math.ceil(baseCanvasHeight * canvasZoom + 64 + Math.abs(panY)) + 'px';
+
+            const range = document.getElementById('canvas-zoom-range');
+            const label = document.getElementById('canvas-zoom-label');
+            if (range) range.value = canvasZoom;
+            if (label) label.textContent = Math.round(canvasZoom * 100) + '%';
+        }
+
+        function applyCanvasZoom() {
+            applyCanvasTransform();
+        }
+
+        function setCanvasZoom(value) {
+            canvasZoom = Math.min(2.5, Math.max(0.5, value));
+            applyCanvasTransform();
+        }
+
+        function zoomCanvas(delta) {
+            setCanvasZoom(Math.round((canvasZoom + delta) * 10) / 10);
+        }
+
+        function fitCanvas() {
+            const workspace = document.querySelector('.canvas-workspace');
+            if (!workspace) return;
+
+            panX = 0;
+            panY = 0;
+            const availableW = workspace.clientWidth - 64;
+            const availableH = workspace.clientHeight - 64;
+            const scale = Math.min(
+                availableW / baseCanvasWidth,
+                availableH / baseCanvasHeight
+            );
+
+            setCanvasZoom(Math.max(0.5, Math.min(1, Math.round(scale * 10) / 10)));
+        }
+
+        function resetCanvasPosition() {
+            panX = 0;
+            panY = 0;
+            applyCanvasTransform();
+        }
+
+        function applyToolStyle() {
+            if (!ctx) return;
+
+            if (drawTool === 'pan') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1;
+                return;
+            }
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (drawTool === 'highlighter') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 0.28;
+                ctx.strokeStyle = penColor;
+                ctx.lineWidth = Math.max(12, penSize * 3);
+            } else if (drawTool === 'eraser') {
+                // 使用白色筆刷擦除，而不是 destination-out。
+                // 原本 destination-out 會把畫布擦成透明，
+                // PNG/Canvas 在部分瀏覽器與目前的工作區背景下會顯示成黑色。
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = Math.max(12, penSize * 3);
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = penColor;
+                ctx.lineWidth = penSize;
+            }
+        }
+
+        function setDrawTool(tool) {
+            drawTool = tool;
+            isEraserMode = tool === 'eraser';
+
+            document.querySelectorAll('.canvas-tool').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tool === tool);
+            });
+
+            const stage = document.getElementById('canvas-stage-inner');
+            stage?.classList.toggle('pan-mode', tool === 'pan');
+            stage?.classList.toggle('eraser-mode', tool === 'eraser');
+            applyToolStyle();
+        }
+
+        function setPenColor(color) {
+            penColor = color;
+            isEraserMode = false;
+            drawTool = 'pen';
+            setDrawTool('pen');
+        }
+
+        function setPenSize(size) {
+            penSize = size;
+            applyToolStyle();
+        }
+
+        function enableEraser() {
+            setDrawTool('eraser');
+        }
+
         function startDraw(e) {
+            if (!canvas || !ctx || drawTool === 'pan') return;
+
             isDrawing = true;
             const pos = getMousePos(e);
+            shapeStart = pos;
+
+            if (['line', 'rect', 'circle'].includes(drawTool)) {
+                previewSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
+            ctx.lineTo(pos.x + 0.01, pos.y + 0.01);
+            ctx.stroke();
+        }
+
+        function drawShapePreview(pos) {
+            if (!previewSnapshot || !shapeStart) return;
+
+            ctx.putImageData(previewSnapshot, 0, 0);
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = penColor;
+            ctx.lineWidth = penSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            const x = shapeStart.x;
+            const y = shapeStart.y;
+            const w = pos.x - x;
+            const h = pos.y - y;
+
+            if (drawTool === 'line') {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            } else if (drawTool === 'rect') {
+                ctx.strokeRect(x, y, w, h);
+            } else if (drawTool === 'circle') {
+                ctx.beginPath();
+                ctx.ellipse(x + w / 2, y + h / 2, Math.abs(w / 2), Math.abs(h / 2), 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+            applyToolStyle();
         }
 
         function draw(e) {
             if (!isDrawing) return;
             const pos = getMousePos(e);
+
+            if (['line', 'rect', 'circle'].includes(drawTool)) {
+                drawShapePreview(pos);
+                return;
+            }
+
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
         }
 
         function stopDraw() {
+            if (!isDrawing) return;
+
             isDrawing = false;
+
+            if (['line', 'rect', 'circle'].includes(drawTool) && shapeStart) {
+                const pos = lastPointerPosition || shapeStart;
+                drawShapeFinal(pos);
+            } else {
+                ctx.closePath();
+                saveCanvasState();
+            }
+
+            shapeStart = null;
+            previewSnapshot = null;
+            lastPointerPosition = null;
         }
 
-        function setPenColor(color) {
-            isEraserMode = false;
-            penColor = color;
-            ctx.strokeStyle = penColor;
+        let lastPointerPosition = null;
+
+        // 重新包裝 pointer move 以記錄形狀終點
+        document.addEventListener('pointermove', (e) => {
+            if (isDrawing && canvas && e.target === canvas) {
+                lastPointerPosition = getMousePos(e);
+            }
+        }, { passive: true });
+
+        function drawShapeFinal(pos) {
+            if (!shapeStart || !canvas) return;
+
+            // 直接從目前預覽狀態畫出最終形狀
             ctx.globalCompositeOperation = 'source-over';
-        }
-
-        function setPenSize(size) {
-            penSize = size;
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = penColor;
             ctx.lineWidth = penSize;
-        }
+            ctx.lineCap = 'round';
 
-        function enableEraser() {
-            isEraserMode = true;
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.lineWidth = penSize * 3;
+            const x = shapeStart.x;
+            const y = shapeStart.y;
+            const w = pos.x - x;
+            const h = pos.y - y;
+
+            if (drawTool === 'line') {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            } else if (drawTool === 'rect') {
+                ctx.strokeRect(x, y, w, h);
+            } else if (drawTool === 'circle') {
+                ctx.beginPath();
+                ctx.ellipse(x + w / 2, y + h / 2, Math.abs(w / 2), Math.abs(h / 2), 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            applyToolStyle();
+            saveCanvasState();
         }
 
         function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // 填入白色背景防透明
+            if (!ctx || !canvas) return;
+
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = penColor;
+            ctx.restore();
+
+            // 清空後永遠保持白色不透明背景
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            applyToolStyle();
+            saveCanvasState();
+        }
+
+        function toggleGrid() {
+            gridVisible = !gridVisible;
+            document.getElementById('canvas-grid-overlay')?.classList.toggle('show', gridVisible);
+            document.getElementById('grid-btn')?.classList.toggle('bg-indigo-100', gridVisible);
+        }
+
+        let spacePan = false;
+        document.addEventListener('keydown', (e) => {
+            if (!canvas || document.getElementById('drawing-modal')?.classList.contains('hidden')) return;
+            if (e.code === 'Space' && !e.repeat && document.activeElement?.tagName !== 'INPUT') {
+                e.preventDefault();
+                spacePan = true;
+                document.getElementById('canvas-stage-inner')?.classList.add('pan-mode');
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                spacePan = false;
+                if (drawTool !== 'pan') {
+                    document.getElementById('canvas-stage-inner')?.classList.remove('pan-mode');
+                }
+            }
+        });
+
+        // 鍵盤快捷鍵
+        document.addEventListener('keydown', (e) => {
+            if (!canvas || document.getElementById('drawing-modal')?.classList.contains('hidden')) return;
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                undoCanvas();
+            } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+                e.preventDefault();
+                redoCanvas();
+            }
+        });
+
+        function showDialog({
+            title = '提示',
+            message = '',
+            icon = '✨',
+            confirmText = '確定',
+            cancelText = '取消',
+            danger = false,
+            showCancel = false
+        } = {}) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('app-dialog');
+                const iconEl = document.getElementById('dialog-icon');
+                const titleEl = document.getElementById('dialog-title');
+                const msgEl = document.getElementById('dialog-message');
+                const okBtn = document.getElementById('dialog-ok');
+                const cancelBtn = document.getElementById('dialog-cancel');
+
+                iconEl.textContent = icon;
+                iconEl.className = `dialog-icon ${danger ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-600'}`;
+                titleEl.textContent = title;
+                msgEl.textContent = message;
+                okBtn.textContent = confirmText;
+                okBtn.className = `modal-primary px-5 py-2.5 ${danger ? 'bg-rose-600 hover:bg-rose-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white text-xs font-bold rounded-xl`;
+                cancelBtn.textContent = cancelText;
+                cancelBtn.classList.toggle('hidden', !showCancel);
+
+                modal.classList.remove('hidden');
+
+                const finish = value => {
+                    modal.classList.add('hidden');
+                    okBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                    resolve(value);
+                };
+
+                okBtn.onclick = () => finish(true);
+                cancelBtn.onclick = () => finish(false);
+            });
+        }
+
+        async function showConfirm(title, message, danger = false) {
+            return await showDialog({
+                title,
+                message,
+                icon: danger ? '🗑️' : '❓',
+                confirmText: danger ? '確定刪除' : '確定',
+                danger,
+                showCancel: true
+            });
         }
 
         function showCustomPrompt(title = "請輸入名稱", placeholder = "請在此輸入...") {
@@ -404,20 +1180,32 @@
             }
         }
 
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            ['textfile-modal', 'drawing-modal', 'custom-prompt-modal', 'app-dialog'].forEach(id => {
+                document.getElementById(id)?.classList.add('hidden');
+            });
+            currentEditingFileId = null;
+            currentEditingDrawingId = null;
+        });
+
         try {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            document.getElementById('db-status').innerText = '雲端同步就緒';
-            document.getElementById('db-status').className = 'bg-emerald-600 text-white px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold shadow-sm tracking-wide';
+            document.getElementById('db-status').innerHTML = '<i class="status-dot"></i><span>雲端同步就緒</span>';
+            document.getElementById('db-status').className = 'bg-emerald-600 text-white px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-sm tracking-wide inline-flex items-center gap-2';
         } catch (e) {
-            document.getElementById('db-status').innerText = '本機模式';
-            document.getElementById('db-status').className = 'bg-rose-500 text-white px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold';
+            document.getElementById('db-status').innerHTML = '<i class="status-dot"></i><span>本機模式</span>';
+            document.getElementById('db-status').className = 'bg-rose-500 text-white px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold inline-flex items-center gap-2';
         }
 
         let treeData = [];
 
         async function fetchTreeData() {
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-                treeData = JSON.parse(localStorage.getItem('study_tree')) || getDefaultTree();
+                const saved = localStorage.getItem('study_tree');
+                treeData = saved ? JSON.parse(saved) : getDefaultTree();
+                if (!saved) localStorage.setItem('study_tree', JSON.stringify(treeData));
                 renderTree(treeData, document.getElementById('tree-container'));
                 return;
             }
@@ -463,7 +1251,10 @@
 
         async function saveAndRenderTree() {
             renderTree(treeData, document.getElementById('tree-container'));
-            if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
+            if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+                localStorage.setItem('study_tree', JSON.stringify(treeData));
+                return;
+            }
             await saveEntireTreeToSupabase();
         }
 
@@ -509,6 +1300,24 @@
             e.stopPropagation(); e.preventDefault();
             e.currentTarget.classList.remove('drag-over');
             if (draggedNodeId === null || draggedNodeId === targetId) return;
+
+            const findNode = (nodes, id) => {
+                for (const n of nodes) {
+                    if (n.id === id) return n;
+                    if (n.children) {
+                        const found = findNode(n.children, id);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            };
+
+            const draggedPreview = findNode(treeData, draggedNodeId);
+            if (draggedPreview?.type === 'folder' && findNode(draggedPreview.children || [], targetId)) {
+                draggedNodeId = null;
+                return;
+            }
+
             let draggedNode = removeNodeFromTree(treeData, draggedNodeId);
             if (!draggedNode) return;
 
@@ -665,8 +1474,9 @@
             saveAndRenderTree();
         }
 
-        function deleteNode(id) {
-            if (!confirm("確定要刪除此項目嗎？")) return;
+        async function deleteNode(id) {
+            const ok = await showConfirm('刪除這個項目？', '如果這是資料夾，其中的內容也可能一起被移除。請確認你真的要繼續。', true);
+            if (!ok) return;
             const findAndDelete = (nodes) => {
                 let index = nodes.findIndex(n => n.id === id);
                 if (index > -1) { nodes.splice(index, 1); return true; }
@@ -751,7 +1561,30 @@
                     if (targetDrawing.content) {
                         const img = new Image();
                         img.onload = () => {
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const dpr = Math.max(1, window.devicePixelRatio || 1);
+                            ctx.save();
+                            ctx.setTransform(1, 0, 0, 1, 0, 0);
+                            ctx.globalCompositeOperation = 'source-over';
+                            ctx.globalAlpha = 1;
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.restore();
+
+                            ctx.save();
+                            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                            ctx.globalCompositeOperation = 'source-over';
+                            ctx.globalAlpha = 1;
+                            ctx.drawImage(img, 0, 0, baseCanvasWidth, baseCanvasHeight);
+                            ctx.restore();
+
+                            applyToolStyle();
+                            panX = 0;
+                            panY = 0;
+                            canvasZoom = 1;
+                            applyCanvasTransform();
+                            history = [];
+                            historyIndex = -1;
+                            saveCanvasState();
                         };
                         img.src = targetDrawing.content;
                     } else {
@@ -764,6 +1597,11 @@
         function closeDrawingModal() {
             document.getElementById('drawing-modal').classList.add('hidden');
             currentEditingDrawingId = null;
+            isDrawing = false;
+            shapeStart = null;
+            previewSnapshot = null;
+            history = [];
+            historyIndex = -1;
         }
 
         function saveDrawingModal() {
@@ -884,6 +1722,13 @@
             }
         }
 
+
+        function escapeHTML(value = '') {
+            return String(value).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            }[ch]));
+        }
+
         // --- 便條紙題庫 CRUD ---
         async function fetchCards() {
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
@@ -905,17 +1750,58 @@
             loadUserQuiz();
         }
 
+        let currentTypeFilter = '全部';
+        let currentChapterFilter = '全部';
+
+        function getQuestionType(card) {
+            const ans = (card.answer || '').replace(/[^A-Ea-e]/g, '').toUpperCase();
+            if (!card.options || Object.keys(card.options).filter(k => card.options[k]).length === 0) return '簡答題';
+            return ans.length > 1 ? '多選題' : '單選題';
+        }
+
+        function getChapter(card) {
+            return (card.title || '未分類').trim() || '未分類';
+        }
+
         function renderSubjectFilters() {
             const filterContainer = document.getElementById('subject-filters');
             const subjects = ['全部', ...new Set(cards.map(c => c.subject).filter(Boolean))];
-            filterContainer.innerHTML = '';
-            subjects.forEach(sub => {
-                const btn = document.createElement('button');
-                btn.className = `px-3.5 py-2 text-xs font-bold rounded-xl transition filter-btn shadow-sm shrink-0 ${currentFilter === sub ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
-                btn.innerText = sub;
-                btn.onclick = () => filterSubject(sub);
-                filterContainer.appendChild(btn);
-            });
+            const chapters = [...new Set(cards.map(getChapter))].sort();
+            const types = ['全部', '單選題', '多選題', '簡答題'];
+
+            filterContainer.innerHTML = `
+                <div class="category-toolbar w-full rounded-2xl p-2.5 sm:p-3 space-y-2.5">
+                    <div class="flex items-center gap-2 overflow-x-auto pb-0.5">
+                        <span class="text-[10px] font-extrabold text-slate-400 shrink-0">科目</span>
+                        <div id="subject-filter-row" class="flex gap-1.5"></div>
+                    </div>
+                    <div class="flex items-center gap-2 overflow-x-auto pb-0.5">
+                        <span class="text-[10px] font-extrabold text-slate-400 shrink-0">題型</span>
+                        <div id="type-filter-row" class="flex gap-1.5"></div>
+                    </div>
+                    <div class="flex items-center gap-2 overflow-x-auto pb-0.5">
+                        <span class="text-[10px] font-extrabold text-slate-400 shrink-0">章節</span>
+                        <div id="chapter-filter-row" class="flex gap-1.5"></div>
+                    </div>
+                </div>
+            `;
+
+            const addButtons = (containerId, values, current, handler) => {
+                const row = document.getElementById(containerId);
+                values.forEach(value => {
+                    const btn = document.createElement('button');
+                    btn.className = `category-filter px-3 py-1.5 text-[11px] font-bold rounded-xl shrink-0 ${current === value ? 'active' : ''}`;
+                    btn.textContent = value;
+                    btn.onclick = () => handler(value);
+                    row.appendChild(btn);
+                });
+            };
+
+            addButtons('subject-filter-row', subjects, currentFilter, filterSubject);
+            addButtons('type-filter-row', types, currentTypeFilter, filterType);
+
+            const chapterValues = ['全部', ...chapters];
+            addButtons('chapter-filter-row', chapterValues, currentChapterFilter, filterChapter);
         }
 
         function filterSubject(sub) {
@@ -924,13 +1810,30 @@
             renderCards();
         }
 
-        async function saveCard() {
+        function filterType(type) {
+            currentTypeFilter = type;
+            renderSubjectFilters();
+            renderCards();
+        }
+
+        function filterChapter(chapter) {
+            currentChapterFilter = chapter;
+            renderSubjectFilters();
+            renderCards();
+        }
+
+                async function saveCard() {
             const editingId = document.getElementById('editing-id').value;
             const subject = document.getElementById('card-subject').value.trim();
             const question = document.getElementById('card-question').value.trim();
             
             if (!subject || !question) {
-                alert('請填寫「科目」與「題目內容」！');
+                await showDialog({
+                    title: '還少一點資料',
+                    message: '請先填寫「科目」與「題目內容」，才能把題目加入題庫。',
+                    icon: '📝',
+                    confirmText: '知道了'
+                });
                 return;
             }
 
@@ -1014,7 +1917,8 @@
         }
 
         async function deleteCard(id) {
-            if (!confirm("確定要刪除這張便條紙嗎？")) return;
+            const ok = await showConfirm('刪除這道題目？', '刪除後將無法在目前的題庫中找到這道題目。這個操作無法復原。', true);
+            if (!ok) return;
             if (!supabaseClient || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
                 cards = cards.filter(c => c.id != id);
                 localStorage.setItem('study_notes_cards', JSON.stringify(cards));
@@ -1028,7 +1932,11 @@
         function renderCards() {
             const wall = document.getElementById('card-wall');
             wall.innerHTML = '';
-            const filteredCards = currentFilter === '全部' ? cards : cards.filter(c => c.subject === currentFilter);
+            const filteredCards = cards.filter(c =>
+                (currentFilter === '全部' || c.subject === currentFilter) &&
+                (currentTypeFilter === '全部' || getQuestionType(c) === currentTypeFilter) &&
+                (currentChapterFilter === '全部' || getChapter(c) === currentChapterFilter)
+            );
 
             if (filteredCards.length === 0) {
                 wall.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 py-10">目前尚無題目資料！</p>`;
@@ -1041,7 +1949,7 @@
                     let optList = '';
                     ['A', 'B', 'C', 'D', 'E'].forEach(key => {
                         if (c.options[key]) {
-                            optList += `<div class="text-xs font-mono text-slate-700 py-0.5 flex items-start"><span class="font-bold text-slate-400 mr-2 bg-slate-100 px-1.5 py-0.5 rounded">(${key})</span><span class="mt-0.5">${c.options[key]}</span></div>`;
+                            optList += `<div class="text-xs font-mono text-slate-700 py-0.5 flex items-start"><span class="font-bold text-slate-400 mr-2 bg-slate-100 px-1.5 py-0.5 rounded">(${key})</span><span class="mt-0.5">${escapeHTML(c.options[key])}</span></div>`;
                         }
                     });
                     if (optList) optionsHtml = `<div class="mb-3 bg-slate-50 p-3 rounded-2xl border border-slate-100"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Options</p>${optList}</div>`;
@@ -1051,27 +1959,28 @@
                 div.className = "exam-note p-5 sm:p-6 rounded-3xl relative flex flex-col justify-between";
                 div.innerHTML = `
                     <div>
-                        <div class="absolute top-4 right-4 flex items-center space-x-1">
-                            <button onclick="editCard('${c.id}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-xl font-bold">編輯</button>
-                            <button onclick="deleteCard('${c.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1.5 rounded-xl font-bold">✕</button>
+                        <div class="question-card-actions absolute top-4 right-4 flex items-center gap-1">
+                            <button onclick="editCard('${c.id}')" title="編輯題目" class="text-xs bg-white/90 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 px-2.5 py-1.5 rounded-xl font-bold border border-slate-200 shadow-sm">✎</button>
+                            <button onclick="deleteCard('${c.id}')" title="刪除題目" class="text-xs bg-white/90 hover:bg-rose-50 text-rose-500 hover:text-rose-700 px-2.5 py-1.5 rounded-xl font-bold border border-slate-200 shadow-sm">⌫</button>
                         </div>
-                        <div class="flex items-center space-x-2 mb-3 pr-20">
-                            <span class="text-[10px] sm:text-[11px] font-bold uppercase bg-slate-900 text-white px-2.5 py-1 rounded-xl">${c.subject}</span>
-                            <span class="text-xs text-slate-500 truncate">${c.title}</span>
+                        <div class="flex items-center flex-wrap gap-1.5 mb-3 pr-20">
+                            <span class="text-[10px] font-extrabold bg-slate-900 text-white px-2.5 py-1 rounded-xl">${escapeHTML(c.subject)}</span>
+                            <span class="question-type-badge bg-indigo-50 text-indigo-700 border border-indigo-100">${getQuestionType(c)}</span>
+                            <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-xl truncate max-w-[170px]"># ${escapeHTML(getChapter(c))}</span>
                         </div>
                         <div class="mb-3">
-                            <p class="text-xs font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">${c.question}</p>
+                            <p class="text-xs font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHTML(c.question)}</p>
                         </div>
                         ${optionsHtml}
                     </div>
                     <div class="mt-2 pt-3 border-t border-slate-100 space-y-2">
                         <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                             <span class="text-[11px] font-bold text-slate-600">📌 答案：</span>
-                            <span class="text-xs font-bold text-indigo-600 bg-white px-2.5 py-0.5 rounded-lg border">${c.answer || '未設'}</span>
+                            <span class="text-xs font-bold text-indigo-600 bg-white px-2.5 py-0.5 rounded-lg border">${escapeHTML(c.answer || '未設')}</span>
                         </div>
                         <div>
                             <p class="text-[11px] font-bold text-slate-600 mb-1">💡 解題解析：</p>
-                            <p class="text-xs text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100">${c.solution || '無解析'}</p>
+                            <p class="text-xs text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHTML(c.solution || '無解析')}</p>
                         </div>
                     </div>
                 `;
@@ -1079,10 +1988,26 @@
             });
         }
 
+
+        function setupRealtime() {
+            if (!supabaseClient) return;
+
+            supabaseClient
+                .channel('study-notes-live')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'study_cards' }, () => fetchCards())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'study_trees' }, () => fetchTreeData())
+                .subscribe();
+        }
+
         window.onload = function() {
             fetchTreeData();
             fetchCards();
+            setupRealtime();
         };
     </script>
 </body>
 </html>
+<style>
+.canvas-stage.pan-mode, .canvas-stage.pan-mode canvas { cursor: grab !important; }
+.canvas-stage.pan-mode.panning, .canvas-stage.pan-mode.panning canvas { cursor: grabbing !important; }
+</style>
