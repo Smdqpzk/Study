@@ -339,38 +339,51 @@
         .canvas-grid-overlay.show { display: block; }
 
 
-/* 針對 Webkit 核心瀏覽器（Chrome, Safari, Edge）隱藏捲軸 */
+/* ===== 響應式畫布：依視窗大小等比例縮放 ===== */
 .canvas-workspace {
-    flex-grow: 1; /* 讓繪圖區自動佔據剩下的所有空間 */
+    /* 以原始畫布 1200:700 的比例固定顯示，螢幕變大/變小時只縮放，不拉伸 */
     width: 100%;
-    min-height: 360px; /* 避免在較矮的視窗中被其他區塊擠壓到只剩一條窄縫 */
-    overflow: hidden; /* 強制隱藏，改由內部 JavaScript 控制縮放 */
+    height: clamp(300px, calc(100vh - 430px), 760px);
+    aspect-ratio: 12 / 7;
+    min-height: 0;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    background-color: #f9f9f9; /* 建議給個淺底色，區分畫布與背景 */
+    background-color: #f9f9f9;
 }
-/* 確保內部視窗不強制溢出 */
+
 .canvas-viewport {
     width: 100%;
     height: 100%;
-    /* 移除 min-width: 100%; min-height: 100%; 如果你希望他完全吻合父層 */
-    padding: 32px;
-    display: flex; /* 配合 flex 置中 */
+    padding: 24px;
+    display: flex;
     justify-content: center;
     align-items: center;
+    overflow: visible;
 }
-        .canvas-stage {
-    max-width: 100%;
-    max-height: 100%;
-    touch-action: none; /* 防止手機觸控造成頁面捲動 */
+
+.canvas-stage {
+    flex: 0 0 auto;
+    touch-action: none;
+    transform-origin: center center;
 }
-        .canvas-stage #drawing-canvas,
-        .canvas-stage .canvas-grid-overlay {
-            width: 1200px !important;
-            height: 700px !important;
-        }
+
+.canvas-stage #drawing-canvas,
+.canvas-stage .canvas-grid-overlay {
+    display: block;
+}
+
+@media (max-width: 640px) {
+    .canvas-workspace {
+        width: 100%;
+        height: min(50vh, calc((100vw - 32px) * 7 / 12));
+        min-height: 240px;
+        aspect-ratio: 12 / 7;
+    }
+    .canvas-viewport { padding: 12px; }
+}
         .zoom-btn {
             width: 32px;
             height: 32px;
@@ -386,21 +399,990 @@
             border-color: #c7d2fe;
         }
         @media (max-width: 640px) {
-            .canvas-workspace { height: 50vh; min-height: 280px; }
-            .canvas-viewport { padding: 18px; }
-            .canvas-stage { width: 900px; height: 560px; }
-            .canvas-stage #drawing-canvas,
-            .canvas-stage .canvas-grid-overlay { width: 900px !important; height: 560px !important; }
-        }
-
-        @media (max-width: 640px) {
-            #drawing-canvas { height: 320px; }
             .exam-note:hover { transform: none; }
         }
 
         .canvas-stage.pan-mode, .canvas-stage.pan-mode canvas { cursor: grab !important; }
         .canvas-stage.pan-mode.panning, .canvas-stage.pan-mode.panning canvas { cursor: grabbing !important; }
-    </style>
+
+/* ===== 畫布 Modal 最終版：縮小控制區、把剩餘空間完整留給畫布 ===== */
+#drawing-modal {
+    padding: 8px !important;
+}
+#drawing-modal > .app-modal-panel {
+    width: 100%;
+    max-width: 1500px;
+    height: calc(100vh - 16px) !important;
+    max-height: calc(100vh - 16px) !important;
+    min-height: 0;
+}
+#drawing-modal .modal-header {
+    flex: 0 0 auto;
+    padding: 10px 16px !important;
+    min-height: 48px;
+}
+#drawing-modal .modal-close {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 18px !important;
+}
+#drawing-modal > .app-modal-panel > .flex-grow {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden !important;
+    padding: 10px 14px !important;
+    gap: 8px !important;
+}
+#drawing-modal #drawing-file-name {
+    padding: 8px 10px !important;
+    height: 38px;
+}
+#drawing-modal .canvas-toolbar {
+    flex: 0 0 auto;
+    padding: 8px !important;
+    border-radius: 14px !important;
+    gap: 7px !important;
+}
+#drawing-modal .canvas-toolbar > div {
+    gap: 6px !important;
+}
+#drawing-modal .canvas-tool,
+#drawing-modal .canvas-size-btn,
+#drawing-modal .canvas-action-btn {
+    padding: 5px 8px !important;
+    min-height: 30px !important;
+    border-radius: 8px !important;
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+}
+#drawing-modal .canvas-tool {
+    font-weight: 800;
+}
+#drawing-modal .color-dot {
+    width: 24px !important;
+    height: 24px !important;
+}
+#drawing-modal .canvas-help-badge {
+    padding: 5px 8px !important;
+    font-size: 9px !important;
+}
+#drawing-modal .canvas-statusbar {
+    padding: 5px 8px !important;
+    font-size: 9px !important;
+}
+#drawing-modal .canvas-workspace {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 180px !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    overflow: hidden !important;
+    border-radius: 14px !important;
+}
+#drawing-modal .canvas-viewport {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+}
+#drawing-modal .canvas-stage {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+#drawing-modal .canvas-stage #drawing-canvas,
+#drawing-modal .canvas-stage .canvas-grid-overlay {
+    width: 1200px !important;
+    height: 700px !important;
+}
+#drawing-modal .canvas-stage .canvas-grid-overlay {
+    inset: 0 !important;
+}
+#drawing-modal .canvas-viewport + * {
+    flex: 0 0 auto;
+}
+#drawing-modal .modal-footer {
+    flex: 0 0 auto;
+    padding: 8px 14px !important;
+}
+#drawing-modal .modal-footer button {
+    padding: 7px 14px !important;
+    min-height: 34px !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+}
+#drawing-modal .zoom-btn {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 8px !important;
+    font-size: 16px !important;
+}
+@media (max-width: 640px) {
+    #drawing-modal { padding: 4px !important; }
+    #drawing-modal > .app-modal-panel {
+        height: calc(100vh - 8px) !important;
+        max-height: calc(100vh - 8px) !important;
+        border-radius: 18px !important;
+    }
+    #drawing-modal .modal-header { padding: 8px 12px !important; min-height: 44px; }
+    #drawing-modal > .app-modal-panel > .flex-grow { padding: 8px !important; gap: 6px !important; }
+    #drawing-modal .canvas-workspace { min-height: 150px !important; }
+    #drawing-modal .canvas-viewport { padding: 6px !important; }
+    #drawing-modal .canvas-tool,
+    #drawing-modal .canvas-size-btn,
+    #drawing-modal .canvas-action-btn {
+        padding: 4px 6px !important;
+        min-height: 28px !important;
+        font-size: 9px !important;
+    }
+}
+
+
+/* ===== Canvas Studio：畫布主體版 ===== */
+#drawing-modal > .app-modal-panel {
+    height: 98vh !important;
+    max-height: 98vh !important;
+}
+#drawing-modal .modal-header {
+    flex: 0 0 58px !important;
+    min-height: 58px !important;
+    padding: 8px 18px !important;
+}
+#drawing-modal > .app-modal-panel > .flex-grow {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 7px 10px !important;
+    gap: 6px !important;
+}
+/* 標題列壓縮 */
+#drawing-modal > .app-modal-panel > .flex-grow > div:first-child {
+    flex: 0 0 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+}
+#drawing-modal > .app-modal-panel > .flex-grow > div:first-child label {
+    margin: 0 !important;
+    white-space: nowrap !important;
+    font-size: 10px !important;
+}
+#drawing-modal #drawing-file-name {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    height: 34px !important;
+    padding: 6px 10px !important;
+    border-radius: 10px !important;
+}
+/* 工具列壓成主要控制區，不搶畫布高度 */
+#drawing-modal .canvas-toolbar {
+    flex: 0 0 auto !important;
+    padding: 6px 8px !important;
+    border-radius: 12px !important;
+    gap: 5px !important;
+    box-shadow: none !important;
+}
+#drawing-modal .canvas-toolbar > div {
+    gap: 4px !important;
+}
+#drawing-modal .canvas-toolbar > div:first-child {
+    flex-wrap: nowrap !important;
+}
+#drawing-modal .canvas-toolbar > div:nth-child(2) {
+    flex-wrap: nowrap !important;
+}
+#drawing-modal .canvas-tool,
+#drawing-modal .canvas-size-btn,
+#drawing-modal .canvas-action-btn {
+    padding: 4px 7px !important;
+    min-height: 28px !important;
+    border-radius: 7px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+}
+#drawing-modal .canvas-section-title {
+    font-size: 9px !important;
+}
+#drawing-modal .color-dot {
+    width: 22px !important;
+    height: 22px !important;
+}
+#drawing-modal #color-picker {
+    width: 26px !important;
+    height: 26px !important;
+}
+#drawing-modal .canvas-help-badge {
+    margin-left: auto !important;
+    padding: 4px 7px !important;
+    font-size: 8px !important;
+}
+#drawing-modal .canvas-statusbar {
+    padding: 4px 6px !important;
+    font-size: 8px !important;
+    margin-top: 2px !important;
+}
+#drawing-modal #eraser-size-range {
+    width: 110px !important;
+}
+/* 畫布絕對優先：吃掉所有剩餘空間 */
+#drawing-modal .canvas-workspace {
+    order: 3 !important;
+    flex: 1 1 0 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    overflow: hidden !important;
+    border-radius: 14px !important;
+    background: #eaf0f7 !important;
+    position: relative !important;
+}
+#drawing-modal .canvas-viewport {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 8px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+#drawing-modal .canvas-stage {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+/* 縮放列改成浮在畫布底部，不再佔畫布高度 */
+#drawing-modal .canvas-workspace + .flex {
+    position: absolute !important;
+    z-index: 20 !important;
+    left: 18px !important;
+    bottom: 10px !important;
+    width: auto !important;
+    max-width: calc(100% - 36px) !important;
+    min-height: 38px !important;
+    padding: 5px 8px !important;
+    gap: 5px !important;
+    border-radius: 10px !important;
+    background: rgba(255,255,255,.94) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 5px 18px rgba(15,23,42,.12) !important;
+}
+#drawing-modal .canvas-workspace + .flex .zoom-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 15px !important;
+}
+#drawing-modal .canvas-workspace + .flex input[type="range"] {
+    width: 110px !important;
+}
+/* 底部儲存列縮小 */
+#drawing-modal > .app-modal-panel > .bg-white:last-child {
+    flex: 0 0 52px !important;
+    min-height: 52px !important;
+    padding: 7px 12px !important;
+}
+#drawing-modal > .app-modal-panel > .bg-white:last-child button {
+    padding: 6px 13px !important;
+    min-height: 34px !important;
+    border-radius: 9px !important;
+    font-size: 10px !important;
+}
+@media (max-width: 900px) {
+    #drawing-modal .canvas-toolbar > div:first-child,
+    #drawing-modal .canvas-toolbar > div:nth-child(2) {
+        flex-wrap: wrap !important;
+    }
+    #drawing-modal .canvas-help-badge { display:none !important; }
+}
+@media (max-width: 640px) {
+    #drawing-modal > .app-modal-panel { height: 99vh !important; max-height: 99vh !important; }
+    #drawing-modal .modal-header { flex-basis: 48px !important; min-height:48px !important; padding:6px 10px !important; }
+    #drawing-modal > .app-modal-panel > .flex-grow { padding:5px !important; gap:4px !important; }
+    #drawing-modal > .app-modal-panel > .flex-grow > div:first-child { flex-basis:32px !important; }
+    #drawing-modal .canvas-toolbar { padding:5px !important; }
+    #drawing-modal .canvas-statusbar span:last-child { display:none !important; }
+    #drawing-modal .canvas-workspace + .flex { left:8px !important; bottom:7px !important; max-width:calc(100% - 16px) !important; }
+}
+
+    
+/* ===== Canvas Studio：左右整合文字／工具，中央畫布最大化 ===== */
+#drawing-modal > .app-modal-panel {
+    height: calc(100vh - 8px) !important;
+    max-height: calc(100vh - 8px) !important;
+    max-width: 1700px !important;
+}
+#drawing-modal .canvas-studio-body {
+    display: grid !important;
+    grid-template-columns: 250px minmax(0, 1fr) 230px !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    overflow: hidden !important;
+}
+#drawing-modal .canvas-side {
+    min-width: 0;
+    min-height: 0;
+    background: rgba(255,255,255,.92);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 4px 16px rgba(15,23,42,.05);
+    overflow-y: auto;
+}
+#drawing-modal .canvas-side-left { display:flex; flex-direction:column; }
+#drawing-modal .canvas-side-right { display:flex; flex-direction:column; }
+#drawing-modal .side-title {
+    font-size: 12px;
+    font-weight: 900;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+#drawing-modal .side-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 13px 0;
+}
+#drawing-modal #drawing-file-name {
+    height: 38px !important;
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+    border-radius: 12px !important;
+}
+#drawing-modal .side-tool-list {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+}
+#drawing-modal .canvas-side .canvas-tool {
+    width:100%;
+    justify-content:flex-start;
+    min-height:34px !important;
+    padding:7px 10px !important;
+    border-radius:9px !important;
+    font-size:11px !important;
+}
+#drawing-modal .canvas-side .canvas-tool.active {
+    box-shadow:0 4px 10px rgba(79,70,229,.18);
+}
+#drawing-modal .side-colors {
+    display:flex;
+    flex-wrap:wrap;
+    gap:9px;
+    align-items:center;
+}
+#drawing-modal .side-colors .color-dot {
+    width:28px !important;
+    height:28px !important;
+}
+#drawing-modal #color-picker {
+    width:30px !important;
+    height:30px !important;
+}
+#drawing-modal .side-title-gap { margin-top: 14px; }
+#drawing-modal .side-size-list {
+    display:flex;
+    gap:7px;
+}
+#drawing-modal .side-size-list .canvas-size-btn {
+    flex:1;
+    min-height:32px !important;
+    padding:6px 8px !important;
+    border-radius:9px !important;
+    font-size:11px !important;
+}
+#drawing-modal .eraser-control {
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+#drawing-modal .eraser-control input { flex:1; min-width:0; }
+#drawing-modal #eraser-size-label {
+    min-width:38px;
+    font-size:11px;
+    font-weight:900;
+    color:#f43f5e;
+}
+#drawing-modal .side-status {
+    margin-top:auto;
+    padding:8px 9px !important;
+    border-radius:9px !important;
+    font-size:10px !important;
+}
+#drawing-modal .canvas-main-area {
+    min-width:0;
+    min-height:0;
+    display:flex;
+}
+#drawing-modal .canvas-workspace {
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    width:100% !important;
+    height:100% !important;
+    overflow:hidden !important;
+    position:relative !important;
+    border-radius:16px !important;
+    background:#eaf0f7 !important;
+}
+#drawing-modal .canvas-viewport {
+    width:100% !important;
+    height:100% !important;
+    padding:10px !important;
+    overflow:hidden !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+}
+#drawing-modal .canvas-stage {
+    flex:0 0 auto !important;
+    max-width:none !important;
+    max-height:none !important;
+}
+#drawing-modal .canvas-stage #drawing-canvas,
+#drawing-modal .canvas-stage .canvas-grid-overlay {
+    width:1200px !important;
+    height:700px !important;
+}
+#drawing-modal .canvas-help-badge {
+    position:absolute !important;
+    right:16px !important;
+    top:14px !important;
+    z-index:25;
+    margin:0 !important;
+    padding:7px 10px !important;
+    border-radius:999px !important;
+    font-size:10px !important;
+    background:rgba(255,255,255,.92) !important;
+    box-shadow:0 3px 12px rgba(15,23,42,.08) !important;
+}
+#drawing-modal .canvas-zoom-float {
+    position:absolute;
+    z-index:25;
+    left:50%;
+    bottom:14px;
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 9px;
+    background:rgba(255,255,255,.95);
+    backdrop-filter:blur(10px);
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    box-shadow:0 6px 20px rgba(15,23,42,.12);
+    white-space:nowrap;
+}
+#drawing-modal .zoom-caption { font-size:10px; font-weight:900; color:#94a3b8; }
+#drawing-modal .canvas-zoom-float input[type="range"] { width:110px; }
+#drawing-modal .zoom-label { min-width:42px; text-align:center; font-size:11px; font-weight:900; color:#4f46e5; }
+#drawing-modal .canvas-zoom-float .zoom-btn {
+    width:30px !important;
+    height:30px !important;
+    border-radius:9px !important;
+}
+#drawing-modal .canvas-zoom-float .canvas-action-btn {
+    min-height:30px !important;
+    padding:5px 9px !important;
+    border-radius:9px !important;
+    font-size:10px !important;
+}
+#drawing-modal .side-actions {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:7px;
+}
+#drawing-modal .side-actions .canvas-action-btn {
+    min-height:34px !important;
+    padding:6px 7px !important;
+    border-radius:9px !important;
+    font-size:10px !important;
+}
+#drawing-modal .shortcut-list {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    font-size:11px;
+    font-weight:800;
+    color:#94a3b8;
+    line-height:1.4;
+}
+#drawing-modal .right-tool-status {
+    padding:10px;
+    border-radius:10px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:11px;
+    font-weight:900;
+}
+#drawing-modal > .app-modal-panel > .bg-white:last-child {
+    flex:0 0 52px !important;
+    min-height:52px !important;
+    padding:7px 12px !important;
+}
+#drawing-modal > .app-modal-panel > .bg-white:last-child button {
+    min-height:34px !important;
+    padding:6px 14px !important;
+    border-radius:10px !important;
+    font-size:11px !important;
+}
+@media (max-width: 1050px) {
+    #drawing-modal .canvas-studio-body { grid-template-columns:210px minmax(0,1fr) 190px !important; gap:8px !important; padding:8px !important; }
+    #drawing-modal .canvas-side { padding:10px; }
+    #drawing-modal .canvas-zoom-float { gap:4px; }
+    #drawing-modal .canvas-zoom-float input[type="range"] { width:80px; }
+    #drawing-modal .zoom-caption { display:none; }
+}
+@media (max-width: 800px) {
+    #drawing-modal .canvas-studio-body { grid-template-columns:180px minmax(0,1fr) !important; }
+    #drawing-modal .canvas-side-right { display:none !important; }
+}
+@media (max-width: 640px) {
+    #drawing-modal > .app-modal-panel { height:99vh !important; max-height:99vh !important; }
+    #drawing-modal .canvas-studio-body { grid-template-columns:1fr !important; grid-template-rows:auto minmax(0,1fr) !important; padding:5px !important; gap:5px !important; overflow:hidden !important; }
+    #drawing-modal .canvas-side-left { max-height:155px; overflow:hidden; }
+    #drawing-modal .canvas-side-left .side-tool-list { grid-template-columns:repeat(4,1fr); display:grid; }
+    #drawing-modal .canvas-side-left .side-tool-list .canvas-tool { min-height:28px !important; padding:4px 5px !important; font-size:8px !important; }
+    #drawing-modal .canvas-side-left .side-divider,
+    #drawing-modal .canvas-side-left .side-status { display:none; }
+    #drawing-modal .side-title-gap { margin-top:6px; }
+    #drawing-modal .canvas-main-area { min-height:0; }
+    #drawing-modal .canvas-zoom-float { left:6px; right:6px; transform:none; justify-content:center; bottom:6px; }
+    #drawing-modal .canvas-zoom-float .canvas-action-btn:nth-last-child(-n+2) { display:none; }
+}
+
+</style>
+<style id="canvas-studio-no-scroll-final">
+
+/* =========================================================
+   Canvas Studio FINAL：畫布中心化 + 全畫面 + 零卷軸
+   ========================================================= */
+html, body {
+    max-width: 100%;
+}
+
+body:has(#drawing-modal:not(.hidden)) {
+    overflow: hidden !important;
+}
+
+#drawing-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+#drawing-modal,
+#drawing-modal * {
+    box-sizing: border-box;
+}
+
+#drawing-modal > .app-modal-panel {
+    width: min(1800px, calc(100vw - 20px)) !important;
+    height: calc(100vh - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+#drawing-modal .modal-header {
+    flex: 0 0 56px !important;
+    min-height: 56px !important;
+    padding: 8px 20px !important;
+    overflow: hidden !important;
+}
+
+#drawing-modal .modal-header > div {
+    min-width: 0 !important;
+}
+
+#drawing-modal .modal-header p,
+#drawing-modal .modal-header h3 {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* 中央三欄：左控制 / 畫布 / 右快捷 */
+#drawing-modal .canvas-studio-body {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 230px minmax(0, 1fr) 220px !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+}
+
+#drawing-modal .canvas-side {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    padding: 12px !important;
+    border-radius: 14px !important;
+}
+
+#drawing-modal .canvas-side-left,
+#drawing-modal .canvas-side-right {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#drawing-modal .side-tool-list {
+    min-height: 0 !important;
+    overflow: hidden !important;
+    gap: 5px !important;
+}
+
+#drawing-modal .canvas-side .canvas-tool {
+    min-height: 32px !important;
+    height: 32px !important;
+    flex: 0 0 32px !important;
+    padding: 5px 9px !important;
+    font-size: 10px !important;
+}
+
+#drawing-modal .side-divider {
+    flex: 0 0 1px !important;
+    margin: 9px 0 !important;
+}
+
+#drawing-modal .side-title {
+    flex: 0 0 auto !important;
+    font-size: 11px !important;
+    margin-bottom: 6px !important;
+}
+
+#drawing-modal #drawing-file-name {
+    flex: 0 0 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 12px !important;
+}
+
+#drawing-modal .side-colors {
+    flex: 0 0 auto !important;
+    gap: 7px !important;
+}
+
+#drawing-modal .side-colors .color-dot {
+    width: 26px !important;
+    height: 26px !important;
+}
+
+#drawing-modal #color-picker {
+    width: 28px !important;
+    height: 28px !important;
+}
+
+#drawing-modal .side-size-list {
+    flex: 0 0 30px !important;
+    height: 30px !important;
+}
+
+#drawing-modal .side-size-list .canvas-size-btn {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 4px 7px !important;
+    font-size: 10px !important;
+}
+
+#drawing-modal .eraser-control {
+    flex: 0 0 28px !important;
+    height: 28px !important;
+}
+
+#drawing-modal .eraser-control input {
+    min-width: 0 !important;
+}
+
+#drawing-modal #eraser-size-label {
+    font-size: 10px !important;
+}
+
+#drawing-modal .side-status {
+    flex: 0 0 auto !important;
+    margin-top: auto !important;
+    padding: 7px 8px !important;
+    font-size: 9px !important;
+}
+
+/* 右側資訊固定在畫布旁，不產生卷軸 */
+#drawing-modal .side-actions {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+}
+
+#drawing-modal .side-actions .canvas-action-btn {
+    min-width: 0 !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 5px 7px !important;
+    font-size: 9px !important;
+}
+
+#drawing-modal .shortcut-list {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+}
+
+#drawing-modal .right-tool-status {
+    flex: 0 0 auto !important;
+    min-height: 40px !important;
+    padding: 9px !important;
+    font-size: 11px !important;
+    border-radius: 10px !important;
+}
+
+/* 中央畫布：永遠置中，吃滿所有剩餘空間 */
+#drawing-modal .canvas-main-area {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+#drawing-modal .canvas-workspace {
+    position: relative !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#drawing-modal .canvas-viewport {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 8px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#drawing-modal .canvas-stage {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    width: 1200px !important;
+    height: 700px !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform-origin: center center !important;
+    touch-action: none !important;
+}
+
+#drawing-modal .canvas-stage #drawing-canvas,
+#drawing-modal .canvas-stage .canvas-grid-overlay {
+    width: 1200px !important;
+    height: 700px !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+
+/* 提示與縮放工具都浮在畫布裡，不影響布局 */
+#drawing-modal .canvas-help-badge {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    z-index: 30 !important;
+    max-width: calc(100% - 24px) !important;
+    padding: 6px 9px !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#drawing-modal .canvas-zoom-float {
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 10px !important;
+    transform: translateX(-50%) !important;
+    z-index: 30 !important;
+    max-width: calc(100% - 20px) !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 5px 7px !important;
+    gap: 5px !important;
+    border-radius: 10px !important;
+}
+
+#drawing-modal .canvas-zoom-float .zoom-caption,
+#drawing-modal .canvas-zoom-float .zoom-label,
+#drawing-modal .canvas-zoom-float button,
+#drawing-modal .canvas-zoom-float input {
+    flex: 0 0 auto !important;
+}
+
+#drawing-modal .canvas-zoom-float input[type="range"] {
+    width: 90px !important;
+    max-width: 90px !important;
+}
+
+#drawing-modal .canvas-zoom-float .canvas-action-btn,
+#drawing-modal .canvas-zoom-float .zoom-btn {
+    min-width: 28px !important;
+    width: auto !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 4px 7px !important;
+    font-size: 9px !important;
+}
+
+/* 底部只保留操作按鈕，不搶畫布高度 */
+#drawing-modal > .app-modal-panel > .bg-white:last-child {
+    flex: 0 0 46px !important;
+    min-height: 46px !important;
+    height: 46px !important;
+    padding: 5px 12px !important;
+    overflow: hidden !important;
+}
+
+#drawing-modal > .app-modal-panel > .bg-white:last-child button {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 6px 14px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+}
+
+/* 絕對禁止畫圖 Modal 產生任何卷軸 */
+#drawing-modal,
+#drawing-modal > .app-modal-panel,
+#drawing-modal .canvas-studio-body,
+#drawing-modal .canvas-side,
+#drawing-modal .canvas-main-area,
+#drawing-modal .canvas-workspace,
+#drawing-modal .canvas-viewport,
+#drawing-modal .canvas-stage,
+#drawing-modal .canvas-toolbar,
+#drawing-modal .modal-footer {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+#drawing-modal::-webkit-scrollbar,
+#drawing-modal *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* 不讓舊版 CSS 在小尺寸時把布局改回直欄 */
+@media (max-width: 1100px) {
+    #drawing-modal .canvas-studio-body {
+        grid-template-columns: 200px minmax(0, 1fr) 190px !important;
+        gap: 8px !important;
+        padding: 8px !important;
+    }
+    #drawing-modal .canvas-side {
+        padding: 10px !important;
+    }
+    #drawing-modal .canvas-zoom-float input[type="range"] {
+        width: 70px !important;
+        max-width: 70px !important;
+    }
+}
+
+@media (max-width: 800px) {
+    #drawing-modal > .app-modal-panel {
+        width: calc(100vw - 10px) !important;
+        max-width: calc(100vw - 10px) !important;
+        height: calc(100vh - 10px) !important;
+        max-height: calc(100vh - 10px) !important;
+    }
+    #drawing-modal .canvas-studio-body {
+        grid-template-columns: 150px minmax(0, 1fr) 150px !important;
+        gap: 6px !important;
+        padding: 6px !important;
+    }
+    #drawing-modal .canvas-side {
+        padding: 8px !important;
+    }
+    #drawing-modal .canvas-side .canvas-tool {
+        font-size: 9px !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+    }
+    #drawing-modal .canvas-zoom-float .canvas-action-btn:nth-last-child(-n+2),
+    #drawing-modal .canvas-zoom-float .zoom-caption {
+        display: none !important;
+    }
+}
+
+@media (max-width: 620px) {
+    /* 小螢幕仍然零卷軸：左右欄縮成窄側欄 */
+    #drawing-modal .canvas-studio-body {
+        grid-template-columns: 118px minmax(0, 1fr) 118px !important;
+        gap: 4px !important;
+        padding: 4px !important;
+    }
+    #drawing-modal .canvas-side {
+        padding: 6px !important;
+        border-radius: 10px !important;
+    }
+    #drawing-modal .side-title,
+    #drawing-modal .shortcut-list,
+    #drawing-modal .right-tool-status,
+    #drawing-modal .side-status {
+        font-size: 8px !important;
+    }
+    #drawing-modal .side-divider { margin: 6px 0 !important; }
+    #drawing-modal .canvas-side .canvas-tool {
+        min-height: 27px !important;
+        height: 27px !important;
+        flex-basis: 27px !important;
+        font-size: 8px !important;
+    }
+    #drawing-modal .side-colors .color-dot {
+        width: 20px !important;
+        height: 20px !important;
+    }
+    #drawing-modal #color-picker { width: 22px !important; height: 22px !important; }
+    #drawing-modal .canvas-zoom-float { bottom: 5px !important; }
+    #drawing-modal .canvas-zoom-float .zoom-label { font-size: 9px !important; }
+}
+</style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
@@ -581,92 +1563,113 @@
 
     <!-- 畫圖筆記 Modal 視窗 -->
     <div id="drawing-modal" class="app-modal fixed inset-0 bg-slate-950/55 backdrop-blur-md z-50 flex items-center justify-center hidden p-2 sm:p-4">
-        <div class="app-modal-panel bg-white rounded-[28px] shadow-2xl w-full max-w-[1500px] overflow-hidden flex flex-col h-[96vh] sm:h-[94vh] border border-white/70">
-            <div class="modal-header bg-gradient-to-br from-indigo-700 via-indigo-800 to-violet-900 text-white px-5 sm:px-7 py-5 flex justify-between items-center">
+        <div class="app-modal-panel bg-white rounded-[28px] shadow-2xl w-full max-w-[1700px] overflow-hidden flex flex-col h-[96vh] border border-white/70">
+            <div class="modal-header bg-gradient-to-br from-indigo-700 via-indigo-800 to-violet-900 text-white px-5 sm:px-7 py-4 flex justify-between items-center">
                 <div>
                     <p class="text-[10px] text-indigo-200 font-bold tracking-[.18em] uppercase mb-1">Canvas Studio</p>
-                    <h3 id="drawing-modal-title" class="font-bold text-sm sm:text-base flex items-center gap-2">🎨 手繪圖解筆記</h3>
+                    <h3 id="drawing-modal-title" class="font-bold text-base sm:text-lg flex items-center gap-2">🎨 編輯手繪：E</h3>
                 </div>
                 <button onclick="closeDrawingModal()" class="modal-close">✕</button>
             </div>
-            <div class="p-4 sm:p-6 flex-grow flex flex-col space-y-4 overflow-y-auto bg-slate-50/50">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">畫布標題名稱</label>
-                    <input id="drawing-file-name" type="text" class="w-full p-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                
-                <!-- 畫布專業工具列 -->
-                <div class="canvas-toolbar bg-white rounded-2xl border border-slate-200 shadow-sm p-3 space-y-3">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="canvas-section-title">工具</span>
-                        <button onclick="setDrawTool('pen')" data-tool="pen" class="canvas-tool active" title="P">✏️ 畫筆</button>
+
+            <div class="canvas-studio-body flex-grow min-h-0 bg-slate-50/60">
+                <!-- 左側：把原本上方的文字與工具整合進畫布旁邊 -->
+                <aside class="canvas-side canvas-side-left">
+                    <div class="side-title">畫布標題名稱</div>
+                    <input id="drawing-file-name" type="text" class="w-full border border-slate-200 rounded-xl bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="輸入畫布名稱">
+
+                    <div class="side-divider"></div>
+                    <div class="side-title">工具</div>
+                    <div class="side-tool-list">
+                        <button onclick="setDrawTool('pen')" data-tool="pen" class="canvas-tool active">✏️ 畫筆</button>
                         <button onclick="setDrawTool('highlighter')" data-tool="highlighter" class="canvas-tool">🖍️ 螢光筆</button>
                         <button onclick="setDrawTool('line')" data-tool="line" class="canvas-tool">╱ 直線</button>
                         <button onclick="setDrawTool('rect')" data-tool="rect" class="canvas-tool">▭ 方框</button>
                         <button onclick="setDrawTool('circle')" data-tool="circle" class="canvas-tool">○ 圓形</button>
                         <button onclick="setDrawTool('pan')" data-tool="pan" class="canvas-tool">✋ 移動</button>
                         <button onclick="enableEraser()" data-tool="eraser" class="canvas-tool">🧽 橡皮擦</button>
-
-                        <span class="canvas-help-badge">Space＋拖曳 = 移動畫布</span>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="canvas-section-title">顏色</span>
-                        <button onclick="setPenColor('#0f172a')" class="color-dot bg-slate-900" title="黑"></button>
-                        <button onclick="setPenColor('#4f46e5')" class="color-dot bg-indigo-600" title="藍"></button>
-                        <button onclick="setPenColor('#dc2626')" class="color-dot bg-red-600" title="紅"></button>
-                        <button onclick="setPenColor('#16a34a')" class="color-dot bg-green-600" title="綠"></button>
-                        <button onclick="setPenColor('#f59e0b')" class="color-dot bg-amber-500" title="黃"></button>
-                        <input type="color" id="color-picker" onchange="setPenColor(this.value)" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent" title="自訂顏色">
-
-                        <span class="canvas-section-title ml-2">筆寬</span>
+                    <div class="side-title side-title-gap">筆寬</div>
+                    <div class="side-size-list">
                         <button onclick="setPenSize(2)" data-size="2" class="canvas-size-btn">細</button>
                         <button onclick="setPenSize(5)" data-size="5" class="canvas-size-btn active-size">中</button>
                         <button onclick="setPenSize(12)" data-size="12" class="canvas-size-btn">粗</button>
+                    </div>
 
-                        <span class="canvas-section-title ml-2">橡皮擦</span>
-                        <input id="eraser-size-range" type="range" min="8" max="80" step="4" value="24"
-                               oninput="setEraserSize(parseInt(this.value))" class="w-24 sm:w-32 accent-rose-500">
-                        <span id="eraser-size-label" class="text-xs font-bold text-rose-500 min-w-[42px]">24px</span>
+                    <div class="side-title side-title-gap">橡皮擦</div>
+                    <div class="eraser-control">
+                        <input id="eraser-size-range" type="range" min="8" max="80" step="4" value="24" oninput="setEraserSize(parseInt(this.value))" class="accent-rose-500">
+                        <span id="eraser-size-label">24px</span>
+                    </div>
 
-                        <span class="grow"></span>
+                    <div class="canvas-statusbar side-status">
+                        <span id="canvas-tool-status">目前工具：畫筆</span>
+                    </div>
+                </aside>
+
+                <!-- 中央：畫布是整個介面的主體 -->
+                <main class="canvas-main-area">
+                    <div class="canvas-workspace rounded-2xl border border-slate-200 bg-slate-100 overflow-hidden shadow-inner">
+                        <div id="canvas-viewport" class="canvas-viewport">
+                            <div id="canvas-stage-inner" class="canvas-stage relative bg-white shadow-xl">
+                                <canvas id="drawing-canvas" class="cursor-crosshair bg-white"></canvas>
+                                <div id="canvas-grid-overlay" class="canvas-grid-overlay"></div>
+                            </div>
+                        </div>
+                        <div class="canvas-help-badge">Space＋拖曳＝移動畫布</div>
+                        <div class="canvas-zoom-float">
+                            <span class="zoom-caption">畫布縮放</span>
+                            <button onclick="zoomCanvas(-0.1)" class="zoom-btn">−</button>
+                            <input id="canvas-zoom-range" type="range" min="0.5" max="2.5" step="0.1" value="1" oninput="setCanvasZoom(parseFloat(this.value))" class="accent-indigo-600">
+                            <button onclick="zoomCanvas(0.1)" class="zoom-btn">＋</button>
+                            <span id="canvas-zoom-label" class="zoom-label">100%</span>
+                            <button onclick="setCanvasZoom(1)" class="canvas-action-btn">100%</button>
+                            <button onclick="fitCanvas()" class="canvas-action-btn">適合視窗</button>
+                            <button onclick="resetCanvasPosition()" class="canvas-action-btn">置中</button>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- 右側：把快捷操作與說明整合到畫布旁邊 -->
+                <aside class="canvas-side canvas-side-right">
+                    <div class="side-title">快捷操作</div>
+                    <div class="side-actions">
                         <button onclick="undoCanvas()" class="canvas-action-btn" title="Ctrl+Z">↶</button>
                         <button onclick="redoCanvas()" class="canvas-action-btn" title="Ctrl+Y">↷</button>
                         <button onclick="toggleGrid()" id="grid-btn" class="canvas-action-btn">▦ 格線</button>
                         <button onclick="clearCanvas()" class="canvas-action-btn danger">清空</button>
                     </div>
-
-                    <div class="canvas-statusbar">
-                        <span id="canvas-tool-status">目前工具：畫筆</span>
-                        <span>滾輪：縮放　｜　Space：移動　｜　中鍵：移動</span>
+                    <div class="side-divider"></div>
+                    <div class="side-title">操作說明</div>
+                    <div class="shortcut-list">
+                        <div>滾輪：縮放</div>
+                        <div>Space：移動</div>
+                        <div>中鍵：移動</div>
+                        <div>Shift＋拖曳：移動</div>
                     </div>
-                </div>
-
-                <!-- 放大畫布工作區 -->
-                <div class="canvas-workspace rounded-2xl border border-slate-200 bg-slate-100 overflow-auto shadow-inner">
-                    <div id="canvas-viewport" class="canvas-viewport">
-                        <div id="canvas-stage-inner" class="canvas-stage relative bg-white shadow-xl">
-                            <canvas id="drawing-canvas" class="cursor-crosshair bg-white"></canvas>
-                            <div id="canvas-grid-overlay" class="canvas-grid-overlay"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-2xl px-3 py-2.5 shadow-sm">
-                    <span class="text-[10px] font-extrabold text-slate-400">畫布縮放</span>
-                    <button onclick="zoomCanvas(-0.1)" class="zoom-btn">−</button>
-                    <input id="canvas-zoom-range" type="range" min="0.5" max="2.5" step="0.1" value="1"
-                           oninput="setCanvasZoom(parseFloat(this.value))" class="w-28 sm:w-40 accent-indigo-600">
-                    <button onclick="zoomCanvas(0.1)" class="zoom-btn">＋</button>
-                    <span id="canvas-zoom-label" class="min-w-[48px] text-center text-xs font-extrabold text-indigo-600">100%</span>
-                    <button onclick="setCanvasZoom(1)" class="canvas-action-btn">100%</button>
-                    <button onclick="fitCanvas()" class="canvas-action-btn">適合視窗</button>
-                    <button onclick="resetCanvasPosition()" class="canvas-action-btn">置中</button>
-                </div>
+                    <div class="side-divider"></div>
+                    <div class="side-title">目前工具</div>
+                    <div class="right-tool-status" id="canvas-tool-status-side">畫筆</div>
+                </aside>
             </div>
-            <div class="bg-white px-5 sm:px-7 py-3.5 border-t border-slate-100 flex justify-end space-x-2">
-                <button onclick="closeDrawingModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
-                <button onclick="saveDrawingModal()" class="px-6 py-2.5 modal-primary bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md px-6 py-2.5">儲存手繪筆記</button>
+
+            <div class="bg-white px-5 sm:px-7 py-3 border-t border-slate-100 flex items-center justify-between gap-3 canvas-bottom-bar">
+                <div class="canvas-bottom-colors">
+                    <span class="canvas-bottom-label">顏色</span>
+                    <div class="side-colors">
+                        <button onclick="setPenColor('#0f172a')" class="color-dot bg-slate-900" title="黑"></button>
+                        <button onclick="setPenColor('#4f46e5')" class="color-dot bg-indigo-600" title="藍"></button>
+                        <button onclick="setPenColor('#dc2626')" class="color-dot bg-red-600" title="紅"></button>
+                        <button onclick="setPenColor('#16a34a')" class="color-dot bg-green-600" title="綠"></button>
+                        <button onclick="setPenColor('#f59e0b')" class="color-dot bg-amber-500" title="黃"></button>
+                        <input type="color" id="color-picker" onchange="setPenColor(this.value)" title="自訂顏色">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="closeDrawingModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
+                    <button onclick="saveDrawingModal()" class="px-6 py-2.5 modal-primary bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md">儲存手繪筆記</button>
+                </div>
             </div>
         </div>
     </div>
@@ -735,6 +1738,8 @@
         let isEraserMode = false;
         let drawTool = 'pen';
         let gridVisible = false;
+        // 預設關閉格線，避免舊狀態或 CSS 影響初始顯示。
+        document.getElementById('canvas-grid-overlay')?.style.setProperty('display', 'none');
         let canvasZoom = 1;
         let panX = 0, panY = 0, isPanning = false, panStart = null;
         let eraserSize = 24;
@@ -799,9 +1804,9 @@
             canvas = document.getElementById('drawing-canvas');
             ctx = canvas.getContext('2d', { alpha: false });
 
-            const mobile = window.innerWidth <= 640;
-            baseCanvasWidth = mobile ? 900 : 1200;
-            baseCanvasHeight = mobile ? 560 : 700;
+            // 畫布維持固定 12:7 比例；實際顯示尺寸由 fitCanvas() 依視窗大小計算。
+            baseCanvasWidth = 1200;
+            baseCanvasHeight = 700;
 
             const stage = document.getElementById('canvas-stage-inner');
             stage.style.width = baseCanvasWidth + 'px';
@@ -827,7 +1832,13 @@
             panX = 0;
             panY = 0;
             applyCanvasTransform();
+            // 初始化後立即依目前螢幕尺寸等比例適配。
+            requestAnimationFrame(() => {
+                fitCanvas();
+                requestAnimationFrame(() => fitCanvas());
+            });
             applyToolStyle();
+            syncCanvasSideStatus();
 
             canvas.onpointerdown = (e) => {
                 e.preventDefault();
@@ -884,6 +1895,14 @@
             updateCanvasHistoryButtons();
         }
 
+        // 左右側欄同步顯示目前工具名稱
+        function syncCanvasSideStatus() {
+            const main = document.getElementById('canvas-tool-status');
+            const side = document.getElementById('canvas-tool-status-side');
+            if (main && side) side.textContent = (main.textContent || '').replace('目前工具：', '').trim();
+        }
+        new MutationObserver(syncCanvasSideStatus).observe(document.getElementById('canvas-tool-status') || document.body, {childList:true, characterData:true, subtree:true});
+
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
             return {
@@ -900,8 +1919,10 @@
             stage.style.transform =
                 `translate(${panX}px, ${panY}px) scale(${canvasZoom})`;
 
-            viewport.style.width = Math.ceil(baseCanvasWidth * canvasZoom + 64 + Math.abs(panX)) + 'px';
-            viewport.style.height = Math.ceil(baseCanvasHeight * canvasZoom + 64 + Math.abs(panY)) + 'px';
+            // viewport 不再跟著縮放改變大小，避免畫布放大/縮小時撐破視窗。
+            // 由 workspace 固定比例 + overflow hidden 控制顯示範圍。
+            viewport.style.width = '100%';
+            viewport.style.height = '100%';
 
             const range = document.getElementById('canvas-zoom-range');
             const label = document.getElementById('canvas-zoom-label');
@@ -959,14 +1980,17 @@
 
             panX = 0;
             panY = 0;
-            const availableW = workspace.clientWidth - 64;
-            const availableH = workspace.clientHeight - 64;
+            const viewport = document.getElementById('canvas-viewport');
+            const availableW = Math.max(1, (viewport?.clientWidth || workspace.clientWidth) - 20);
+            const availableH = Math.max(1, (viewport?.clientHeight || workspace.clientHeight) - 20);
             const scale = Math.min(
                 availableW / baseCanvasWidth,
                 availableH / baseCanvasHeight
             );
 
-            setCanvasZoom(Math.max(0.5, Math.min(1, Math.round(scale * 10) / 10)));
+            // 以目前畫布工作區為基準等比例縮放；小視窗也能完整看到畫布。
+            const fitted = Math.max(0.2, Math.min(1, scale));
+            setCanvasZoom(Math.round(fitted * 100) / 100);
         }
 
         function resetCanvasPosition() {
@@ -974,6 +1998,18 @@
             panY = 0;
             applyCanvasTransform();
         }
+
+        // 螢幕尺寸改變時重新計算「適合視窗」，保持畫布比例不變。
+        let canvasResizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(canvasResizeTimer);
+            canvasResizeTimer = setTimeout(() => {
+                const modal = document.getElementById('drawing-modal');
+                if (modal && !modal.classList.contains('hidden') && canvas) {
+                    fitCanvas();
+                }
+            }, 80);
+        });
 
         function applyToolStyle() {
             if (!ctx) return;
@@ -989,7 +2025,7 @@
 
             if (drawTool === 'highlighter') {
                 ctx.globalCompositeOperation = 'source-over';
-                ctx.globalAlpha = 0.28;
+                ctx.globalAlpha = 0.16;
                 ctx.strokeStyle = penColor;
                 ctx.lineWidth = eraserSize;
             } else if (drawTool === 'eraser') {
@@ -1202,8 +2238,20 @@
 
         function toggleGrid() {
             gridVisible = !gridVisible;
-            document.getElementById('canvas-grid-overlay')?.classList.toggle('show', gridVisible);
-            document.getElementById('grid-btn')?.classList.toggle('bg-indigo-100', gridVisible);
+            const grid = document.getElementById('canvas-grid-overlay');
+            const btn = document.getElementById('grid-btn');
+
+            if (grid) {
+                grid.classList.toggle('show', gridVisible);
+                // 用 inline style 明確控制顯示狀態，避免其他 CSS 規則讓格線關不掉。
+                grid.style.display = gridVisible ? 'block' : 'none';
+                grid.setAttribute('aria-hidden', String(!gridVisible));
+            }
+            if (btn) {
+                btn.classList.toggle('bg-indigo-100', gridVisible);
+                btn.textContent = gridVisible ? '▦ 格線：開' : '▦ 格線：關';
+                btn.setAttribute('aria-pressed', String(gridVisible));
+            }
         }
 
         let spacePan = false;
@@ -1801,8 +2849,13 @@
                             applyToolStyle();
                             panX = 0;
                             panY = 0;
+                            // 載入舊畫布後也必須重新「適合視窗」，避免恢復成 100% 而超出螢幕。
                             canvasZoom = 1;
                             applyCanvasTransform();
+                            requestAnimationFrame(() => {
+                                fitCanvas();
+                                requestAnimationFrame(() => fitCanvas());
+                            });
                             history = [];
                             historyIndex = -1;
                             saveCanvasState();
@@ -2241,5 +3294,313 @@
             setupRealtime();
         };
     </script>
+
+<style id="canvas-tools-visibility-fix">
+/* ===== 工具列可見性修正：小螢幕也必須完整顯示全部工具 ===== */
+#drawing-modal .canvas-side-left .side-tool-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+#drawing-modal .canvas-side-left .side-tool-list .canvas-tool {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  flex: none !important;
+  padding: 5px 6px !important;
+  font-size: 10px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+@media (max-width: 640px) {
+  /* 不再用 max-height:155px 把工具截掉 */
+  #drawing-modal .canvas-side-left {
+    top: 58px !important;
+    bottom: 58px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+  #drawing-modal .canvas-side-left .side-tool-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    overflow: visible !important;
+  }
+  #drawing-modal .canvas-side-left .side-tool-list .canvas-tool {
+    min-height: 29px !important;
+    height: 29px !important;
+    padding: 4px 5px !important;
+    font-size: 9px !important;
+    border-radius: 8px !important;
+  }
+  #drawing-modal .canvas-side-left .side-divider {
+    margin: 5px 0 !important;
+  }
+  #drawing-modal .canvas-side-left .side-title {
+    font-size: 10px !important;
+    margin-bottom: 5px !important;
+  }
+  #drawing-modal .canvas-side-left #drawing-file-name {
+    height: 34px !important;
+    padding: 6px 8px !important;
+  }
+  #drawing-modal .canvas-side-left .side-colors {
+    gap: 5px !important;
+    flex-wrap: nowrap !important;
+  }
+  #drawing-modal .canvas-side-left .side-colors .color-dot {
+    width: 22px !important;
+    height: 22px !important;
+    flex: 0 0 22px !important;
+  }
+  #drawing-modal .canvas-side-left .side-size-list {
+    gap: 5px !important;
+  }
+  #drawing-modal .canvas-side-left .side-size-list .canvas-size-btn {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 4px !important;
+    font-size: 9px !important;
+  }
+  #drawing-modal .canvas-side-left .eraser-control {
+    gap: 5px !important;
+  }
+  #drawing-modal .canvas-side-left .side-status {
+    display: flex !important;
+    min-height: 34px !important;
+    padding: 6px 8px !important;
+    font-size: 9px !important;
+  }
+}
+</style>
 </body>
 </html>
+<style id="canvas-fullscreen-final">
+/* ===== 全螢幕畫布：畫布真正佔滿整個視窗，控制面板浮在上面 ===== */
+html, body { width:100%; height:100%; overflow:hidden !important; }
+body:has(#drawing-modal:not(.hidden)) { overflow:hidden !important; }
+
+#drawing-modal {
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  background:#eef2f7 !important;
+}
+#drawing-modal > .app-modal-panel {
+  position:relative !important;
+  width:100vw !important;
+  max-width:none !important;
+  height:100vh !important;
+  max-height:none !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  border-radius:0 !important;
+  overflow:hidden !important;
+  display:block !important;
+}
+
+/* 畫布層：真正從左上到右下滿版 */
+#drawing-modal .canvas-studio-body {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:block !important;
+  overflow:hidden !important;
+  background:#eaf0f7 !important;
+}
+#drawing-modal .canvas-main-area {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  display:block !important;
+}
+#drawing-modal .canvas-workspace {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#eaf0f7 !important;
+  overflow:hidden !important;
+}
+#drawing-modal .canvas-viewport {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+/* 預設畫布最大化，但仍維持 12:7 比例 */
+#drawing-modal .canvas-stage {
+  flex:0 0 auto !important;
+  max-width:none !important;
+  max-height:none !important;
+}
+
+/* 上方標題浮層 */
+#drawing-modal .modal-header {
+  position:absolute !important;
+  z-index:100 !important;
+  top:12px !important;
+  left:16px !important;
+  right:16px !important;
+  width:auto !important;
+  height:52px !important;
+  min-height:52px !important;
+  padding:7px 12px !important;
+  border-radius:16px !important;
+  background:rgba(49,46,129,.88) !important;
+  backdrop-filter:blur(14px) !important;
+  box-shadow:0 8px 28px rgba(15,23,42,.16) !important;
+}
+#drawing-modal .modal-close { width:38px !important; height:38px !important; }
+
+/* 左右控制改成浮動面板，不再佔用畫布尺寸 */
+#drawing-modal .canvas-side {
+  position:absolute !important;
+  z-index:90 !important;
+  top:80px !important;
+  bottom:76px !important;
+  height:auto !important;
+  overflow:hidden !important;
+  background:rgba(255,255,255,.88) !important;
+  backdrop-filter:blur(14px) !important;
+  box-shadow:0 8px 28px rgba(15,23,42,.12) !important;
+}
+#drawing-modal .canvas-side-left {
+  left:16px !important;
+  width:230px !important;
+}
+#drawing-modal .canvas-side-right {
+  right:16px !important;
+  width:220px !important;
+}
+
+/* 畫布提示與縮放列都漂浮在畫布上 */
+#drawing-modal .canvas-help-badge { z-index:95 !important; top:18px !important; right:18px !important; }
+#drawing-modal .canvas-zoom-float { z-index:95 !important; bottom:18px !important; }
+
+/* 底部儲存列浮動 */
+#drawing-modal > .app-modal-panel > .bg-white:last-child {
+  position:absolute !important;
+  z-index:100 !important;
+  left:16px !important;
+  right:16px !important;
+  bottom:12px !important;
+  width:auto !important;
+  height:52px !important;
+  min-height:52px !important;
+  padding:7px 10px !important;
+  border-radius:16px !important;
+  background:rgba(255,255,255,.9) !important;
+  backdrop-filter:blur(14px) !important;
+  box-shadow:0 8px 28px rgba(15,23,42,.12) !important;
+}
+
+/* 讓浮動面板不會因為螢幕太窄而製造卷軸 */
+@media (max-width:900px){
+  #drawing-modal .canvas-side-left { left:8px !important; width:190px !important; }
+  #drawing-modal .canvas-side-right { right:8px !important; width:180px !important; }
+  #drawing-modal .canvas-side { top:72px !important; bottom:68px !important; padding:9px !important; }
+  #drawing-modal > .app-modal-panel > .bg-white:last-child { left:8px !important; right:8px !important; bottom:7px !important; }
+}
+@media (max-width:640px){
+  #drawing-modal .modal-header { top:6px !important; left:6px !important; right:6px !important; height:46px !important; min-height:46px !important; }
+  #drawing-modal .canvas-side-left { left:6px !important; top:58px !important; bottom:auto !important; width:150px !important; max-height:250px !important; }
+  #drawing-modal .canvas-side-right { right:6px !important; top:58px !important; bottom:auto !important; width:140px !important; max-height:220px !important; }
+  #drawing-modal .canvas-side { padding:7px !important; }
+  #drawing-modal .canvas-side .canvas-tool { min-height:27px !important; height:27px !important; flex-basis:27px !important; font-size:8px !important; padding:4px 6px !important; }
+  #drawing-modal .side-divider { margin:5px 0 !important; }
+  #drawing-modal .side-title { font-size:9px !important; }
+  #drawing-modal .side-colors .color-dot { width:20px !important; height:20px !important; }
+  #drawing-modal .canvas-zoom-float { bottom:64px !important; }
+  #drawing-modal > .app-modal-panel > .bg-white:last-child { height:48px !important; min-height:48px !important; }
+}
+
+/* ===== 顏色選擇移到畫布下方白色操作區 ===== */
+#drawing-modal .canvas-bottom-bar {
+    flex: 0 0 58px !important;
+    min-height: 58px !important;
+    height: 58px !important;
+    overflow: hidden !important;
+}
+#drawing-modal .canvas-bottom-colors {
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    min-width:0 !important;
+}
+#drawing-modal .canvas-bottom-label {
+    font-size:11px !important;
+    font-weight:900 !important;
+    color:#64748b !important;
+    white-space:nowrap !important;
+}
+#drawing-modal .canvas-bottom-colors .side-colors {
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    flex-wrap:nowrap !important;
+}
+#drawing-modal .canvas-bottom-colors .color-dot {
+    width:28px !important;
+    height:28px !important;
+    flex:0 0 28px !important;
+}
+#drawing-modal .canvas-bottom-colors #color-picker {
+    width:30px !important;
+    height:30px !important;
+    flex:0 0 30px !important;
+    padding:0 !important;
+}
+@media (max-width:640px){
+    #drawing-modal .canvas-bottom-bar {
+        flex:0 0 54px !important;
+        min-height:54px !important;
+        height:54px !important;
+        padding:5px 8px !important;
+    }
+    #drawing-modal .canvas-bottom-label { font-size:9px !important; }
+    #drawing-modal .canvas-bottom-colors { gap:6px !important; }
+    #drawing-modal .canvas-bottom-colors .side-colors { gap:5px !important; }
+    #drawing-modal .canvas-bottom-colors .color-dot { width:22px !important; height:22px !important; flex-basis:22px !important; }
+    #drawing-modal .canvas-bottom-colors #color-picker { width:24px !important; height:24px !important; flex-basis:24px !important; }
+    #drawing-modal .canvas-bottom-bar > .flex { gap:4px !important; }
+    #drawing-modal .canvas-bottom-bar > .flex button { padding:5px 8px !important; min-height:30px !important; height:30px !important; font-size:9px !important; }
+}
+</style>
+<script>
+/* 全螢幕畫布開啟後，永遠重新適合目前視窗 */
+window.addEventListener('resize', () => {
+  clearTimeout(window.__fullCanvasFitTimer);
+  window.__fullCanvasFitTimer = setTimeout(() => {
+    if (typeof fitCanvas === 'function' && canvas) fitCanvas();
+  }, 100);
+});
+</script>
