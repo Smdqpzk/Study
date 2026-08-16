@@ -222,6 +222,68 @@
         }
 
 
+
+        .canvas-toolbar {
+            position: relative;
+            z-index: 5;
+        }
+        .canvas-section-title {
+            font-size: 10px;
+            font-weight: 900;
+            color: #94a3b8;
+            margin-right: 2px;
+        }
+        .canvas-help-badge {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 800;
+            color: #64748b;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            padding: 6px 9px;
+        }
+        .color-dot {
+            width: 29px;
+            height: 29px;
+            border-radius: 999px;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #cbd5e1;
+            transition: .15s ease;
+        }
+        .color-dot:hover {
+            transform: scale(1.12);
+        }
+        .canvas-size-btn.active-size {
+            background: #eef2ff;
+            border-color: #a5b4fc;
+            color: #4338ca;
+        }
+        .canvas-statusbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 7px 10px;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .canvas-statusbar #canvas-tool-status {
+            color: #475569;
+            font-weight: 900;
+        }
+        .canvas-stage.pan-mode #drawing-canvas {
+            cursor: grab;
+        }
+        .canvas-stage.pan-mode.panning #drawing-canvas {
+            cursor: grabbing;
+        }
+        .canvas-stage.eraser-mode #drawing-canvas {
+            cursor: crosshair;
+        }
+
         .canvas-tool, .canvas-size-btn, .canvas-action-btn {
             border: 1px solid #e2e8f0;
             background: #f8fafc;
@@ -277,24 +339,33 @@
         .canvas-grid-overlay.show { display: block; }
 
 
-        .canvas-workspace {
-            height: min(60vh, 760px);
-            min-height: 360px;
-            overscroll-behavior: contain;
-        }
-        .canvas-viewport {
-            width: max-content;
-            height: max-content;
-            min-width: 100%;
-            min-height: 100%;
-            padding: 32px;
-        }
+/* 針對 Webkit 核心瀏覽器（Chrome, Safari, Edge）隱藏捲軸 */
+.canvas-workspace {
+    flex-grow: 1; /* 讓繪圖區自動佔據剩下的所有空間 */
+    width: 100%;
+    min-height: 360px; /* 避免在較矮的視窗中被其他區塊擠壓到只剩一條窄縫 */
+    overflow: hidden; /* 強制隱藏，改由內部 JavaScript 控制縮放 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background-color: #f9f9f9; /* 建議給個淺底色，區分畫布與背景 */
+}
+/* 確保內部視窗不強制溢出 */
+.canvas-viewport {
+    width: 100%;
+    height: 100%;
+    /* 移除 min-width: 100%; min-height: 100%; 如果你希望他完全吻合父層 */
+    padding: 32px;
+    display: flex; /* 配合 flex 置中 */
+    justify-content: center;
+    align-items: center;
+}
         .canvas-stage {
-            position: relative;
-            width: 1200px;
-            height: 700px;
-            transform-origin: top left;
-        }
+    max-width: 100%;
+    max-height: 100%;
+    touch-action: none; /* 防止手機觸控造成頁面捲動 */
+}
         .canvas-stage #drawing-canvas,
         .canvas-stage .canvas-grid-overlay {
             width: 1200px !important;
@@ -326,6 +397,9 @@
             #drawing-canvas { height: 320px; }
             .exam-note:hover { transform: none; }
         }
+
+        .canvas-stage.pan-mode, .canvas-stage.pan-mode canvas { cursor: grab !important; }
+        .canvas-stage.pan-mode.panning, .canvas-stage.pan-mode.panning canvas { cursor: grabbing !important; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
@@ -522,37 +596,49 @@
                 </div>
                 
                 <!-- 畫布專業工具列 -->
-                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="canvas-toolbar bg-white rounded-2xl border border-slate-200 shadow-sm p-3 space-y-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-[10px] font-extrabold text-slate-400 mr-1">工具</span>
-                        <button onclick="setDrawTool('pen')" data-tool="pen" class="canvas-tool active">✏️ 畫筆</button>
+                        <span class="canvas-section-title">工具</span>
+                        <button onclick="setDrawTool('pen')" data-tool="pen" class="canvas-tool active" title="P">✏️ 畫筆</button>
                         <button onclick="setDrawTool('highlighter')" data-tool="highlighter" class="canvas-tool">🖍️ 螢光筆</button>
                         <button onclick="setDrawTool('line')" data-tool="line" class="canvas-tool">╱ 直線</button>
                         <button onclick="setDrawTool('rect')" data-tool="rect" class="canvas-tool">▭ 方框</button>
                         <button onclick="setDrawTool('circle')" data-tool="circle" class="canvas-tool">○ 圓形</button>
-                        <button onclick="setDrawTool('pan')" data-tool="pan" class="canvas-tool">✋ 移動畫布</button>
+                        <button onclick="setDrawTool('pan')" data-tool="pan" class="canvas-tool">✋ 移動</button>
                         <button onclick="enableEraser()" data-tool="eraser" class="canvas-tool">🧽 橡皮擦</button>
+
+                        <span class="canvas-help-badge">Space＋拖曳 = 移動畫布</span>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-[10px] font-extrabold text-slate-400 mr-1">顏色</span>
-                        <button onclick="setPenColor('#0f172a')" class="w-7 h-7 rounded-full bg-slate-900 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
-                        <button onclick="setPenColor('#4f46e5')" class="w-7 h-7 rounded-full bg-indigo-600 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
-                        <button onclick="setPenColor('#dc2626')" class="w-7 h-7 rounded-full bg-red-600 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
-                        <button onclick="setPenColor('#16a34a')" class="w-7 h-7 rounded-full bg-green-600 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
-                        <button onclick="setPenColor('#f59e0b')" class="w-7 h-7 rounded-full bg-amber-500 border-2 border-white shadow ring-1 ring-slate-300 hover:scale-110"></button>
-                        <input type="color" id="color-picker" onchange="setPenColor(this.value)" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent">
+                        <span class="canvas-section-title">顏色</span>
+                        <button onclick="setPenColor('#0f172a')" class="color-dot bg-slate-900" title="黑"></button>
+                        <button onclick="setPenColor('#4f46e5')" class="color-dot bg-indigo-600" title="藍"></button>
+                        <button onclick="setPenColor('#dc2626')" class="color-dot bg-red-600" title="紅"></button>
+                        <button onclick="setPenColor('#16a34a')" class="color-dot bg-green-600" title="綠"></button>
+                        <button onclick="setPenColor('#f59e0b')" class="color-dot bg-amber-500" title="黃"></button>
+                        <input type="color" id="color-picker" onchange="setPenColor(this.value)" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent" title="自訂顏色">
 
-                        <span class="text-[10px] font-extrabold text-slate-400 ml-2">筆寬</span>
-                        <button onclick="setPenSize(2)" class="canvas-size-btn">細</button>
-                        <button onclick="setPenSize(5)" class="canvas-size-btn">中</button>
-                        <button onclick="setPenSize(12)" class="canvas-size-btn">粗</button>
+                        <span class="canvas-section-title ml-2">筆寬</span>
+                        <button onclick="setPenSize(2)" data-size="2" class="canvas-size-btn">細</button>
+                        <button onclick="setPenSize(5)" data-size="5" class="canvas-size-btn active-size">中</button>
+                        <button onclick="setPenSize(12)" data-size="12" class="canvas-size-btn">粗</button>
+
+                        <span class="canvas-section-title ml-2">橡皮擦</span>
+                        <input id="eraser-size-range" type="range" min="8" max="80" step="4" value="24"
+                               oninput="setEraserSize(parseInt(this.value))" class="w-24 sm:w-32 accent-rose-500">
+                        <span id="eraser-size-label" class="text-xs font-bold text-rose-500 min-w-[42px]">24px</span>
 
                         <span class="grow"></span>
-                        <button onclick="undoCanvas()" class="canvas-action-btn" title="復原 Ctrl+Z">↶ 復原</button>
-                        <button onclick="redoCanvas()" class="canvas-action-btn" title="重做 Ctrl+Y">↷ 重做</button>
+                        <button onclick="undoCanvas()" class="canvas-action-btn" title="Ctrl+Z">↶</button>
+                        <button onclick="redoCanvas()" class="canvas-action-btn" title="Ctrl+Y">↷</button>
                         <button onclick="toggleGrid()" id="grid-btn" class="canvas-action-btn">▦ 格線</button>
                         <button onclick="clearCanvas()" class="canvas-action-btn danger">清空</button>
+                    </div>
+
+                    <div class="canvas-statusbar">
+                        <span id="canvas-tool-status">目前工具：畫筆</span>
+                        <span>滾輪：縮放　｜　Space：移動　｜　中鍵：移動</span>
                     </div>
                 </div>
 
@@ -651,6 +737,7 @@
         let gridVisible = false;
         let canvasZoom = 1;
         let panX = 0, panY = 0, isPanning = false, panStart = null;
+        let eraserSize = 24;
         let baseCanvasWidth = 1200;
         let baseCanvasHeight = 700;
         let history = [];
@@ -746,7 +833,7 @@
                 e.preventDefault();
                 canvas.setPointerCapture?.(e.pointerId);
 
-                if (drawTool === 'pan' || spacePan || e.button === 1 || e.shiftKey) {
+                if (drawTool === 'pan' || spacePan || e.button === 1 || e.button === 2 || e.shiftKey) {
                     isPanning = true;
                     panStart = { clientX: e.clientX, clientY: e.clientY, x: panX, y: panY };
                     document.getElementById('canvas-stage-inner')?.classList.add('pan-mode', 'panning');
@@ -790,6 +877,9 @@
                 document.getElementById('canvas-stage-inner')?.classList.remove('panning');
             };
 
+            canvas.onwheel = handleCanvasWheel;
+            canvas.oncontextmenu = (e) => e.preventDefault();
+
             saveCanvasState();
             updateCanvasHistoryButtons();
         }
@@ -820,6 +910,37 @@
         }
 
         function applyCanvasZoom() {
+            applyCanvasTransform();
+        }
+
+
+        // 滾輪縮放：游標所在位置盡量保持在原地
+        function handleCanvasWheel(e) {
+            if (!canvas) return;
+            e.preventDefault();
+
+            const oldZoom = canvasZoom;
+            const rect = canvas.getBoundingClientRect();
+            const localX = e.clientX - rect.left;
+            const localY = e.clientY - rect.top;
+
+            const direction = e.deltaY < 0 ? 1 : -1;
+            const nextZoom = Math.min(2.5, Math.max(0.5,
+                Math.round((oldZoom + direction * 0.1) * 10) / 10
+            ));
+            if (nextZoom === oldZoom) return;
+
+            const worldX = localX / oldZoom;
+            const worldY = localY / oldZoom;
+
+            canvasZoom = nextZoom;
+
+            // 讓游標下的畫布內容保持在相近位置
+            const newLocalX = worldX * canvasZoom;
+            const newLocalY = worldY * canvasZoom;
+            panX += localX - newLocalX;
+            panY += localY - newLocalY;
+
             applyCanvasTransform();
         }
 
@@ -870,7 +991,7 @@
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = 0.28;
                 ctx.strokeStyle = penColor;
-                ctx.lineWidth = Math.max(12, penSize * 3);
+                ctx.lineWidth = eraserSize;
             } else if (drawTool === 'eraser') {
                 // 使用白色筆刷擦除，而不是 destination-out。
                 // 原本 destination-out 會把畫布擦成透明，
@@ -896,8 +1017,21 @@
             });
 
             const stage = document.getElementById('canvas-stage-inner');
-            stage?.classList.toggle('pan-mode', tool === 'pan');
+            stage?.classList.toggle('pan-mode', tool === 'pan' || spacePan);
             stage?.classList.toggle('eraser-mode', tool === 'eraser');
+
+            const names = {
+                pen: '畫筆',
+                highlighter: '螢光筆',
+                line: '直線',
+                rect: '方框',
+                circle: '圓形',
+                pan: '移動畫布',
+                eraser: '橡皮擦'
+            };
+            const status = document.getElementById('canvas-tool-status');
+            if (status) status.textContent = '目前工具：' + (names[tool] || tool);
+
             applyToolStyle();
         }
 
@@ -910,6 +1044,16 @@
 
         function setPenSize(size) {
             penSize = size;
+            document.querySelectorAll('.canvas-size-btn').forEach(btn => {
+                btn.classList.toggle('active-size', Number(btn.dataset.size) === size);
+            });
+            applyToolStyle();
+        }
+
+        function setEraserSize(size) {
+            eraserSize = Math.min(80, Math.max(8, size));
+            const label = document.getElementById('eraser-size-label');
+            if (label) label.textContent = eraserSize + 'px';
             applyToolStyle();
         }
 
@@ -1052,12 +1196,6 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.restore();
 
-            // 清空後永遠保持白色不透明背景
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-
             applyToolStyle();
             saveCanvasState();
         }
@@ -1086,6 +1224,41 @@
             }
         });
 
+
+        // Space + 拖曳 = 暫時移動畫布，不需要切換工具
+        document.addEventListener('keydown', (e) => {
+            if (!canvas) return;
+            const tag = document.activeElement?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                spacePan = true;
+                document.getElementById('canvas-stage-inner')?.classList.add('pan-mode');
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                spacePan = false;
+                const stage = document.getElementById('canvas-stage-inner');
+                if (stage && drawTool !== 'pan') stage.classList.remove('pan-mode');
+            }
+        });
+
+
+        document.addEventListener('dblclick', (e) => {
+            if (!canvas) return;
+            const workspace = document.querySelector('.canvas-workspace');
+            if (!workspace || !workspace.contains(e.target)) return;
+            if (e.target === canvas || e.target.closest?.('#canvas-stage-inner')) {
+                panX = 0;
+                panY = 0;
+                canvasZoom = 1;
+                applyCanvasTransform();
+            }
+        });
+
         // 鍵盤快捷鍵
         document.addEventListener('keydown', (e) => {
             if (!canvas || document.getElementById('drawing-modal')?.classList.contains('hidden')) return;
@@ -1097,6 +1270,11 @@
                 e.preventDefault();
                 redoCanvas();
             }
+        });
+
+        window.addEventListener('resize', () => {
+            if (!canvas) return;
+            applyCanvasTransform();
         });
 
         function showDialog({
@@ -1190,13 +1368,48 @@
             currentEditingDrawingId = null;
         });
 
+
+        // ===== 雲端連線狀態保護 =====
+        // Supabase 初始化失敗或網路無回應時，10 秒後自動切換成本機模式提示，
+        // 避免整個頁面卡在「連線中...」。
+        function setDBStatus(text, colorClass) {
+            const el = document.getElementById('db-status');
+            if (!el) return;
+            el.innerHTML = '<i class="status-dot"></i><span>' + text + '</span>';
+            el.className = colorClass;
+        }
+
+        let dbConnectionResolved = false;
+
+        function markDBReady() {
+            dbConnectionResolved = true;
+            setDBStatus(
+                '雲端同步就緒',
+                'bg-emerald-600 text-white px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-sm tracking-wide inline-flex items-center gap-2'
+            );
+        }
+
+        function markLocalMode() {
+            dbConnectionResolved = true;
+            setDBStatus(
+                '本機模式',
+                'bg-rose-500 text-white px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold inline-flex items-center gap-2'
+            );
+        }
+
+        setTimeout(() => {
+            if (!dbConnectionResolved) {
+                markLocalMode();
+                console.warn('Supabase 連線逾時，已切換成本機模式。');
+            }
+        }, 10000);
+
+
         try {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            document.getElementById('db-status').innerHTML = '<i class="status-dot"></i><span>雲端同步就緒</span>';
-            document.getElementById('db-status').className = 'bg-emerald-600 text-white px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-sm tracking-wide inline-flex items-center gap-2';
+            markDBReady();
         } catch (e) {
-            document.getElementById('db-status').innerHTML = '<i class="status-dot"></i><span>本機模式</span>';
-            document.getElementById('db-status').className = 'bg-rose-500 text-white px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold inline-flex items-center gap-2';
+            markLocalMode();
         }
 
         let treeData = [];
@@ -1210,18 +1423,26 @@
                 return;
             }
 
-            const { data, error } = await supabaseClient
-                .from('study_trees')
-                .select('*')
-                .order('sort_order', { ascending: true });
+            try {
+                const { data, error } = await supabaseClient
+                    .from('study_trees')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
 
-            if (error || !data || data.length === 0) {
-                treeData = getDefaultTree();
-                await saveEntireTreeToSupabase();
-            } else {
-                treeData = buildNestedTree(data);
+                if (error || !data || data.length === 0) {
+                    treeData = getDefaultTree();
+                    await saveEntireTreeToSupabase();
+                } else {
+                    treeData = buildNestedTree(data);
+                }
+                renderTree(treeData, document.getElementById('tree-container'));
+            } catch (err) {
+                console.warn('雲端資料載入失敗，切換本機模式', err);
+                treeData = JSON.parse(localStorage.getItem('study_tree')) || getDefaultTree();
+                localStorage.setItem('study_tree', JSON.stringify(treeData));
+                renderTree(treeData, document.getElementById('tree-container'));
+                markLocalMode();
             }
-            renderTree(treeData, document.getElementById('tree-container'));
         }
 
         function getDefaultTree() {
@@ -1737,10 +1958,23 @@
                 return;
             }
 
-            const { data, error } = await supabaseClient.from('study_cards').select('*').order('created_at', { ascending: false });
-            if (!error) {
-                cards = data || [];
+            try {
+                const { data, error } = await supabaseClient
+                    .from('study_cards')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (!error) {
+                    cards = data || [];
+                    updateUI();
+                } else {
+                    throw error;
+                }
+            } catch (err) {
+                console.warn('題庫雲端載入失敗，使用本機資料', err);
+                cards = JSON.parse(localStorage.getItem('study_notes_cards')) || [];
                 updateUI();
+                markLocalMode();
             }
         }
 
@@ -1996,7 +2230,9 @@
                 .channel('study-notes-live')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'study_cards' }, () => fetchCards())
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'study_trees' }, () => fetchTreeData())
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('Supabase Realtime:', status);
+                });
         }
 
         window.onload = function() {
@@ -2007,7 +2243,3 @@
     </script>
 </body>
 </html>
-<style>
-.canvas-stage.pan-mode, .canvas-stage.pan-mode canvas { cursor: grab !important; }
-.canvas-stage.pan-mode.panning, .canvas-stage.pan-mode.panning canvas { cursor: grabbing !important; }
-</style>
