@@ -1989,7 +1989,7 @@ body:has(#drawing-modal:not(.hidden)) {
             );
 
             // 以目前畫布工作區為基準等比例縮放；小視窗也能完整看到畫布。
-            const fitted = Math.max(0.2, Math.min(1, scale));
+            const fitted = Math.max(0.2, Math.min(2.5, scale));
             setCanvasZoom(Math.round(fitted * 100) / 100);
         }
 
@@ -2027,7 +2027,7 @@ body:has(#drawing-modal:not(.hidden)) {
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = 0.16;
                 ctx.strokeStyle = penColor;
-                ctx.lineWidth = eraserSize;
+                ctx.lineWidth = Math.max(10, penSize * 4);
             } else if (drawTool === 'eraser') {
                 // 使用白色筆刷擦除，而不是 destination-out。
                 // 原本 destination-out 會把畫布擦成透明，
@@ -2035,7 +2035,7 @@ body:has(#drawing-modal:not(.hidden)) {
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = 1;
                 ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = Math.max(12, penSize * 3);
+                ctx.lineWidth = eraserSize;
             } else {
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = 1;
@@ -3378,11 +3378,46 @@ body:has(#drawing-modal:not(.hidden)) {
   }
 }
 </style>
+
+<style id="final-stability-fix">
+/* ===== 最終穩定修正 ===== */
+#drawing-modal.hidden { display:none !important; }
+#drawing-modal:not(.hidden) { display:flex !important; }
+
+#drawing-modal .canvas-stage {
+    will-change: transform;
+}
+
+#drawing-modal .canvas-stage canvas {
+    display:block !important;
+    user-select:none !important;
+    -webkit-user-select:none !important;
+}
+
+#drawing-modal .canvas-bottom-bar {
+    pointer-events:auto;
+}
+
+/* 主頁正常可以捲動；只有開啟畫布時鎖定 */
+body:has(#drawing-modal.hidden) {
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+}
+
+/* 小螢幕避免浮動左右工具蓋住主要畫布太多 */
+@media (max-width: 640px) {
+    #drawing-modal .canvas-side-left,
+    #drawing-modal .canvas-side-right {
+        opacity:.96;
+    }
+}
+</style>
+
 </body>
 </html>
 <style id="canvas-fullscreen-final">
 /* ===== 全螢幕畫布：畫布真正佔滿整個視窗，控制面板浮在上面 ===== */
-html, body { width:100%; height:100%; overflow:hidden !important; }
+html, body { width:100%; min-height:100%; }
 body:has(#drawing-modal:not(.hidden)) { overflow:hidden !important; }
 
 #drawing-modal {
